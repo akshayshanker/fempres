@@ -1,0 +1,116 @@
+baseline_lite: 
+  parameter_description:
+    M_max: Maximum study knowledge
+    M_min: Min study knowledge
+    Mh_max: Maximum coursework grade
+    Mh_min: Min study knowledge
+    H: Hours in the week
+    rho_E: Share of final exam in final grade
+    T: Final exam week
+    beta_sbar: 'Mean of time preference shock'
+    rho_beta: 'Persistence of time preference shock'
+    sigma_beta: 'SD of time preference shock'
+    deltas_sbar: 'Mean of time preference shock hyper'
+    rho_delta: 'Persistence of time preference shock'
+    sigma_delta: 'SD of time preference shock'
+    xi_star: 'Leisure shock mean'
+    rho_xi: 'Leisure shock persistence'
+    sigma_xi: 'Leisure shock SD'
+    es_star: 'General study ability mean'
+    rho_es: 'General study ability persistence'
+    sigma_es: 'General study ability SD'
+    ec_star: 'CW study ability mean'
+    rho_ec: 'CW study ability persistence'
+    sigma_ec: 'CW study ability SD'
+    zeta_star: 'Final exam ability mean'
+    sigma_zeta: 'CW study ability SD'
+    zeta_hstar: 'Perceived final exam ability mean'
+    sigma_hzeta: 'Perceived final exam ability SD'
+    iota: 'Depreciation of exam'
+    alpha_FC: 'Final grade utility'
+    alpha_M: 'Elasticity of exam study to effort'
+    psi_C: 'Coursework production normalisation'
+    psi_E: 'Exam production normalisation'
+    gamma_1: 'Share of bucket 1'
+    gamma_2: 'Share of bucket 2'
+    gamma_3: 'Share of bucket 3'
+    gamma_4: 'Share of bucket 4'
+    gamma_5: 'Share of bucket 5'
+    gamma_6: 'Share of bucket 6'
+    gamma_7: 'Share of bucket 7'
+    talpha_M1: 'Elas of bucket 1 to exam knowledge'
+    talpha_M2: 'Elas of bucket 2 to exam knowledge'
+    talpha_M3: 'Elas of bucket 3 to exam knowledge'
+    talpha_M4: 'Elas of bucket 4 to exam knowledge'
+    talpha_M5: 'Elas of bucket 5 to exam knowledge'
+    talpha_M6: 'Elas of bucket 6 to exam knowledge'
+    talpha_M7: 'Elas of bucket 7 to exam knowledge'
+    talpha_HM1: 'Elas of bucket 1 to CW knowledge'
+    talpha_HM2: 'Elas of bucket 2 to CW knowledge'
+    talpha_HM3: 'Elas of bucket 3 to CW knowledge'
+    talpha_HM4: 'Elas of bucket 4 to CW knowledge'
+    talpha_HM5: 'Elas of bucket 5 to CW knowledge'
+    talpha_HM6: 'Elas of bucket 6 to CW knowledge'
+    talpha_HM7: 'Elas of bucket 7 to CW knowledge'
+
+  parameters:
+    M_max: 500
+    M_min: .01
+    Mh_max: 100
+    Mh_min: .01
+    H: 128
+    rho_E: .55
+    T: 11
+    beta_star: .95
+    rho_beta: .9
+    sigma_beta: .1
+    deltas_star: .95
+    rho_delta: .9
+    sigma_delta: .95
+    xi_star: 2
+    rho_xi: .9
+    sigma_xi: 1
+    es_star: 1
+    rho_es: .9
+    sigma_es: 1
+    ec_star: 1
+    rho_ec: .8
+    sigma_ec: 1
+    zeta_star: 1
+    sigma_zeta: 2
+    zeta_hstar: 1
+    sigma_hzeta: 2
+    grid_size_M: 50
+    grid_size_Mh: 50
+    grid_size_beta: 6
+    grid_size_delta: 6
+    grid_size_xi: 6
+    grid_size_ec: 6
+    grid_size_es: 6
+    grid_size_zeta: 6
+    iota: .02
+    alpha_FC: 2
+    alpha_M: .2
+    psi_C: .2
+    psi_E: .1
+    gamma_1: .05
+    gamma_2: .05
+    gamma_3: .05
+    gamma_4: .05
+    gamma_5: .05
+    gamma_6: .05
+    gamma_7: .05
+    talpha_M1: .2
+    talpha_M2: .05
+    talpha_M3: .05
+    talpha_M4: .05
+    talpha_M5: .05
+    talpha_M6: .05
+    talpha_M7: .05
+    talpha_HM1: .05
+    talpha_HM2: .05
+    talpha_HM3: .05
+    talpha_HM4: .05
+    talpha_HM5: .05
+    talpha_HM6: .05
+  
