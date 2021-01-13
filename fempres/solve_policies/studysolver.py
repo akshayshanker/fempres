@@ -399,4 +399,4 @@ def generate_study_pols(og):
     TS_all = TSALL(S_pol_all)
     moments_out = gen_moments(TS_all)
 
-    return S_pol_all,moments_out, TS_all
+    return moments_out

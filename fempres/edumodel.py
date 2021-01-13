@@ -288,7 +288,7 @@ if __name__ == "__main__":
                                 param_random_cov = sampmom[1], 
                                 random_bounds = param_random_bounds)
 
-    S_pol_all,moments_sim,TS_all = generate_study_pols(edu_model.og)
+    moments_sim = generate_study_pols(edu_model.og)
 
 
     moments_sim_array = np.array(np.ravel(moments_sim))

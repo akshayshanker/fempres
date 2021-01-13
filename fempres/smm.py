@@ -52,7 +52,7 @@ def gen_RMS(edu_model,\
 
 	"""
 		
-	S_pol_all,moments_sim,TS_all = generate_study_pols(edu_model.og)
+	moments_sim = generate_study_pols(edu_model.og)
 
 
 	moments_sim_array = np.array(np.ravel(moments_sim))
