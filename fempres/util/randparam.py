@@ -28,10 +28,11 @@ def rand_p_generator(
         np.array([(bdns) for key, bdns in param_random_bounds.items()] ) 
 
     # generate random sample
+    
     random_draw = np.random.uniform(0, 1)
     # noise injection rate of 10%
-    #if random_draw<.1:
-    #    initial = 1
+    if random_draw<.1:
+        initial = 1
 
 
     in_range = False
@@ -40,17 +41,26 @@ def rand_p_generator(
         while in_range == False:
             draws = np.random.multivariate_normal(param_random_means, param_random_cov)
 
-            if np.sum(draws> random_param_bounds_ar[:,1]) + np.sum(draws<random_param_bounds_ar[:,0])==0:
+            for i,key in zip(np.arange(len(draws)),param_random_bounds.keys()):
+                parameters[key]  = draws[i]
+
+            if np.sum(draws < random_param_bounds_ar[:,0]) + np.sum(draws > random_param_bounds_ar[:,1]) == 0 and\
+                parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] + parameters['gamma_4']< 1 :
                 in_range = True
                #print("in range")
             else:
                 pass
-            for i,key in zip(np.arange(len(draws)),param_random_bounds.keys()):
-                parameters[key]  = draws[i]
 
     if deterministic == 0 and initial == 1:
-        for key in param_random_bounds:
-            parameters[key]  = np.random.uniform(param_random_bounds[key][0], param_random_bounds[key][1])
+        while in_range == False:
+
+            for key in param_random_bounds:
+                parameters[key]  = np.random.uniform(param_random_bounds[key][0], param_random_bounds[key][1])
+
+            if parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] + parameters['gamma_4']< 1:
+                #print('yes')
+                in_range = True
+            #in_range = True
 
     parameters['ID'] = np.random.randint(0,999999999999)
 

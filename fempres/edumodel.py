@@ -27,25 +27,38 @@ warnings.filterwarnings('ignore')
 class EduModel:
 
     """
+    Generates Education Model class
+    with all params, functions and grids 
+    for a paramterised Education Model 
 
     """
 
     def __init__(self,
                  config,  # Settings dictionary
+                 U, 
+                 U_z,
                  param_id,# ID for parameter value set
-                 mod_name # Name of model
+                 mod_name # Name of model (group_ID)
                  ):
         
         self.parameters = config['parameters']
+        self.config = config
         self.__dict__.update(config['parameters'])
-        self.u_grade, self.fin_exam_grade,self.cw_grade,\
-            self.S_effort, self.u_l\
-             = edumodel_function_factory(config['parameters'])
 
+        self.u_grade, self.fin_exam_grade,\
+            self.S_effort_to_IM, self.u_l\
+             = edumodel_function_factory(config['parameters'],
+                                            config['theta'],
+                                            config['share_saq'],
+                                            config['share_eb'],
+                                            config['share_mcq'],
+                                            config['share_hap'],)
 
         # 1D grids
         self.M  = np.linspace(self.M_min, self.M_max, self.grid_size_M)
         self.Mh = np.linspace(self.Mh_min, self.Mh_max, self.grid_size_Mh)
+        self.U = U
+        self.U_z = U_z
 
         # Create 2D endogenous state-space grid
         self.MM = UCGrid((self.M_min, self.M_max, self.grid_size_M),
@@ -55,11 +68,8 @@ class EduModel:
 
         # Individual stochastic processes 
 
-        #  beta and delta processes
-        #  Recall beta_star is the mean of beta the discount rate
-
         lnr_beta_bar = np.log(1/self.beta_star - 1)
-        y_bar = lnr_beta_bar*(1-self.beta_star)
+        y_bar = lnr_beta_bar*(1-self.rho_beta)
         self.lnr_beta_mc = tauchen(self.rho_beta,
                                    self.sigma_beta,
                                    b = y_bar,
@@ -71,58 +81,11 @@ class EduModel:
         self.beta_stat = self.lnr_beta_mc.stationary_distributions[0]
 
 
-        lnr_delta_bar = np.log(1/self.deltas_star - 1)
-        y_bar = lnr_delta_bar*(1-self.deltas_star)
-        self.lnr_delta_mc = tauchen(self.rho_delta,
-                                   self.sigma_delta,
-                                   b=y_bar,
-                                   n=self.grid_size_delta)
-        
-        self.delta_hat = 1/(1+np.exp(self.lnr_delta_mc.state_values))
-
-        self.P_delta = self.lnr_delta_mc.P
-        self.delta_stat = self.lnr_delta_mc.stationary_distributions[0]
-
-        # leisure shock (normally distributed)
-
-        self.xi_mc = tauchen(self.rho_xi,
-                                   self.sigma_xi,
-                                   b=self.xi_star,
-                                   n=self.grid_size_xi)
-        self.xi_hat = self.xi_mc.state_values
-        self.P_xi = self.xi_mc.P
-        self.xi_stat = self.xi_mc.stationary_distributions[0]
-
-        # Study ability shock (log-normally distributed)
-        # means and sd and rho is for the log(e_s) process 
-
-        self.es_mc = tauchen(self.rho_es,
-                                   self.sigma_es,
-                                   b = self.es_star,
-                                   n = self.grid_size_es)
-        self.es_hat = np.exp(self.es_mc.state_values)
-        self.P_es = self.es_mc.P
-        self.es_stat = self.es_mc.stationary_distributions[0]
-
-        # CW grading ability shock (normally distributed)
-        # means and sd and rho is for the (e_c) process 
-
-        self.ec_mc = tauchen(self.rho_ec,
-                                   self.sigma_ec,
-                                   b = self.ec_star,
-                                   n = self.grid_size_ec)
-        self.ec_hat = self.ec_mc.state_values
-        self.P_ec = self.ec_mc.P
-        self.ec_stat = self.ec_mc.stationary_distributions[0]
-
-        # Actual exam grading ability shock (normally distributed)
-        # means and sd and rho is for the (e_c) process 
-
         self.zeta_mc = tauchen(0,
                                    self.sigma_zeta,
                                    b = self.zeta_star,
                                    n = self.grid_size_zeta)
-        self.zeta_hat = self.zeta_mc.state_values
+        self.zeta_hat = np.exp(self.zeta_mc.state_values)
         self.P_zeta = self.zeta_mc.P
         self.zeta_stat = self.zeta_mc.stationary_distributions[0]
 
@@ -134,61 +97,95 @@ class EduModel:
                                    self.sigma_hzeta,
                                    b=self.zeta_hstar,
                                    n=self.grid_size_zeta)
-        self.zeta_hhat = self.zetah_mc.state_values
+        self.zeta_hhat = np.exp(self.zetah_mc.state_values)
         self.P_zetah = self.zetah_mc.P
         self.zetah_stat = self.zetah_mc.stationary_distributions[0]
 
-        # Grid for stochastic processes 
+        # Generate final period T expected continuation value
 
-        # Combine all shock values into cartesian product 
+        VF_UC = np.zeros((len(self.zeta_hhat)*len(self.M)*len(self.Mh)))
 
-        self.Q_shocks = cartesian([self.beta_hat,self.delta_hat,\
-                                    self.xi_hat,self.es_hat,self.ec_hat])
-        self.Q_shocks_ind = cartesian([np.arange(len(self.beta_hat)),np.arange(len(self.delta_hat)),\
-                                    np.arange(len(self.xi_hat)),np.arange(len(self.es_hat)),np.arange(len(self.ec_hat))])
+        T_state_all = cartesian([self.zeta_hhat, self.M, self.Mh])
 
-        self.EBA_P = np.zeros((len(self.beta_hat),
-                                len(self.delta_hat),
-                                len(self.xi_hat),
-                                len(self.es_hat),
-                                len(self.ec_hat),
-                                int(len(self.beta_hat)*
-                                len(self.delta_hat)*
-                                len(self.xi_hat)*
-                                len(self.es_hat)*
-                                len(self.ec_hat))))
+        for i in range(len(T_state_all)):
+            zetah = T_state_all[i,0]
+            m = T_state_all[i,1]
+            mh = T_state_all[i,2]
+            exam_mark = self.fin_exam_grade(zetah,m)
+            #print(exam_mark)
+            utilT = self.u_grade(exam_mark, mh)
 
-        sizeEBA =   int(len(self.beta_hat)*
-                                len(self.delta_hat)*
-                                len(self.xi_hat)*
-                                len(self.es_hat)*
-                                len(self.ec_hat))
+            VF_UC[i] = utilT
 
-        self.EBA_P2 = self.EBA_P.reshape((sizeEBA, sizeEBA))
+        # Condition this back
+        VF_UC_1 = VF_UC.reshape((len(self.zeta_hhat),len(self.M),len(self.Mh)))
+        VF_UC_2 = VF_UC_1.transpose((1,2,0))
 
+        self.VT = np.dot(VF_UC_2,self.P_zetah[0])
 
-        for j in self.Q_shocks_ind:
+def map_moments(moments_data):
 
-            EBA_P_temp = cartesian([self.P_beta[j[0]],
-                                    self.P_delta[j[1]],
-                                    self.P_xi[j[2]],
-                                    self.P_es[j[3]],
-                                    self.P_ec[j[4]]])
+    group_list = moments_data['group'].unique()
 
-            self.EBA_P[j[0], j[1], j[2],j[3],j[4], :]\
-                = EBA_P_temp[:, 0]*EBA_P_temp[:, 1]*EBA_P_temp[:, 2]\
-                    *EBA_P_temp[:, 3]*EBA_P_temp[:, 4]
-
-        # Generate empty value functions and policy functions
-
-        self.VF_e = np.zeros((len(self.Q_shocks), len(self.M), len(self.Mh)))
-        self.IM_e = np.zeros((len(self.Q_shocks), len(self.M), len(self.Mh)))
-        self.IM_h = np.zeros((len(self.Q_shocks), len(self.M), len(self.Mh)))
+    def gen_group_list(somelist):
+        return {x: {} for x in somelist}
 
 
- 
+    moments_grouped_sorted = gen_group_list(group_list)
+
+    list_moments = ['av_final',\
+                    'av_mark',\
+                    'av_markw13_exp1',\
+                    'av_markw13_exp2',\
+                    'av_game_session_hours_cumul',\
+                    'av_ebook_session_hours_cumul',\
+                    'av_mcq_session_hours_cumul',\
+                    'av_saq_session_hours_cumul',\
+                    'av_player_happy_deploym_cumul',\
+                    'av_mcq_attempt_nonrev_cumul',\
+                    'av_sa_attempt_cumul', \
+                    'av_mcq_Cshare_nonrev_cumul',\
+                    'sd_final',\
+                    'sd_mark',\
+                    'sd_markw13_exp1',\
+                    'sd_markw13_exp2',\
+                    'sd_game_session_hours_cumul',\
+                    'sd_ebook_session_hours_cumul',\
+                    'sd_mcq_session_hours_cumul',\
+                    'sd_saq_session_hours_cumul',\
+                    'sd_player_happy_deploym_cumul',\
+                    'sd_mcq_attempt_nonrev_cumul',\
+                    'sd_sa_attempt_cumul', \
+                    'sd_mcq_Cshare_nonrev_cumul',\
+                    'acgame_session_hours',\
+                    'acebook_session_hours',\
+                    'acmcq_session_hours',\
+                    'acsaq_session_hours',\
+                    'acmcq_Cshare_nonrev',\
+                    'cmcsaq_session_hours',\
+                    'cgsaq_session_hours',\
+                    'cgmcq_session_hours',\
+                    'cesaq_session_hours',\
+                    'cemcq_session_hours',\
+                    'ceg_session_hours',\
+                    'c_atar_ii']
+
+
+    for keys in moments_grouped_sorted:
+        moments_grouped_sorted[keys]['data_moments'] = np.empty((11,36))
+
+        # Do the mappings based on word_doc indices
+
+    for i in range(len(list_moments)):
+        for key in moments_grouped_sorted:
+            moments_data_for_gr = moments_data[moments_data['group'] == key]
+            moments_grouped_sorted[key]['data_moments'][:,i] = moments_data_for_gr[list_moments[i]]
+
+    return moments_grouped_sorted
+
+
 class EduModelParams:
-    """ Parameterised class for the LifeCycleModel
+    """ Parameterises class for the LifeCycleModel
             Instance of LifeCycleParams contains 
             parameter list, a paramterized EduModel
 
@@ -204,6 +201,8 @@ class EduModelParams:
     def __init__(self,
                  mod_name,
                  param_dict,
+                 U,
+                 U_z,
                  random_draw=False,
                  random_bounds=None,  # parameter bounds for randomly generated params
                  param_random_means=None,  # mean of random param distribution
@@ -220,7 +219,7 @@ class EduModelParams:
                                     deterministic=1,
                                     initial=uniform)
 
-            self.og = EduModel(param_dict, self.param_id, mod_name=mod_name)
+            self.og = EduModel(param_dict, U, U_z, self.param_id, mod_name=mod_name)
             self.parameters = parameters_draws
             self.parameters['param_id'] = self.param_id
 
@@ -236,10 +235,11 @@ class EduModelParams:
             param_dict_new = copy.copy(param_dict)
             param_dict_new['parameters'] = parameters_draws
 
-            self.og = EduModel(param_dict_new, self.param_id, mod_name=mod_name)
+            self.og = EduModel(param_dict_new, U, U_z, self.param_id, mod_name=mod_name)
 
             self.parameters = parameters_draws
             self.parameters['param_id'] = self.param_id
+
 
 
 if __name__ == "__main__":
@@ -248,6 +248,8 @@ if __name__ == "__main__":
     # an instance of DB LifeCycle model and DC LS model
     import yaml
     import csv
+    import pandas as pd
+    from solve_policies.studysolver import generate_study_pols
 
     # Folder contains settings (grid sizes and non-random params)
     # and random param bounds
@@ -267,15 +269,43 @@ if __name__ == "__main__":
             param_random_bounds[row['parameter']] = np.float64([row['LB'],
                                                                 row['UB']])
 
-    #sampmom = pickle.load(
-    #    open("{}{}/latest_means_iter.smms".format(scr_path, model_name), "rb"))
+    sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format('test/tau_00'),"rb"))
+
+    # Generate random points for beta
+    U = np.random.rand(edu_config['baseline_lite']['parameters']['N'],\
+                        edu_config['baseline_lite']['parameters']['T'])
+
+    # Generate random points for ability and percieved ability 
+    U_z = np.random.rand(edu_config['baseline_lite']['parameters']['N'],2)
+
+
+    moments_data = pd.read_csv('{}moments_clean.csv'\
+                    .format(settings))
+
+    moments_grouped_sorted  = map_moments(moments_data)
 
     edu_model = EduModelParams('test',
-                                edu_config['baseline_lite'],
-                                random_draw = False,
-                                # Parameter bounds for randomly generated params
+                                edu_config['tau_00'],
+                                U,
+                                U_z,
+                                random_draw = True,
+                                uniform = True,
+                                param_random_means = sampmom[0], 
+                                param_random_cov = sampmom[1], 
                                 random_bounds = param_random_bounds)
-                                # Mean of random param distribution
-                                #param_random_means =sampmom[0],
-                                #param_random_cov = sampmom[1],
-                                #uniform = False)
+
+    S_pol_all,moments_sim,TS_all = generate_study_pols(edu_model.og)
+
+
+    moments_sim_array = np.array(np.ravel(moments_sim))
+    moments_data_array = np.array(np.ravel(moments_grouped_sorted['tau_00']['data_moments']))
+
+    deviation = (moments_sim_array\
+                [~np.isnan(moments_data_array)]\
+                  - moments_data_array\
+                  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
+        
+    
+    # Import moments
+
+
