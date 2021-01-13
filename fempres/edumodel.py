@@ -14,6 +14,7 @@ import dill as pickle
 from sklearn.utils.extmath import cartesian
 from quantecon import tauchen
 from interpolation.splines import UCGrid, CGrid, nodes, eval_linear
+import copy
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -187,6 +188,7 @@ class EduModelParams:
 
             Todo
             ----
+
 
     """
 
