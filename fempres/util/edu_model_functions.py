@@ -10,14 +10,8 @@ import matplotlib.pyplot as plt
 from itertools import product
 from numba import njit, prange, jit, vectorize
 
-from sklearn.utils.extmath import cartesian 
-
-
 from interpolation.splines import UCGrid, CGrid, nodes, eval_linear
 import time
-import pandas as pd
-from pathos.pools import ProcessPool 
-#from pathos.multiprocessing import Pool as ProcessPool
 import copy
 
 
