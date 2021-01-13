@@ -1,11 +1,8 @@
-
 """
 This module contains the Education model class
  
 """
-
 # Import packages
-
 from util.randparam import rand_p_generator
 from util.edu_model_functions import edumodel_function_factory
 import numpy as np
@@ -17,12 +14,9 @@ import dill as pickle
 from sklearn.utils.extmath import cartesian
 from quantecon import tauchen
 from interpolation.splines import UCGrid, CGrid, nodes, eval_linear
-import copy
-
 
 import warnings
 warnings.filterwarnings('ignore')
-
 
 class EduModel:
 
@@ -130,7 +124,6 @@ def map_moments(moments_data):
     def gen_group_list(somelist):
         return {x: {} for x in somelist}
 
-
     moments_grouped_sorted = gen_group_list(group_list)
 
     list_moments = ['av_final',\
@@ -194,7 +187,6 @@ class EduModelParams:
 
             Todo
             ----
-
 
     """
 

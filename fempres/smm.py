@@ -1,4 +1,4 @@
-  
+ 
 """
 Module estimates EduModel using Simualted Method of Moments
 Minimisation performed using Cross-Entropy method (see Kroese et al)

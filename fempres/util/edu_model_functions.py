@@ -3,11 +3,6 @@
 # Import packages
 
 import numpy as np
-
-from quantecon import tauchen
-
-import matplotlib.pyplot as plt
-from itertools import product
 from numba import njit, prange, jit, vectorize
 
 from interpolation.splines import UCGrid, CGrid, nodes, eval_linear
