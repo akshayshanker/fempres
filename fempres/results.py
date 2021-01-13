@@ -90,11 +90,60 @@ if __name__ == "__main__":
 	moments_sim = generate_study_pols(edu_model.og)
 
 	moments_sim_all = world.gather(moments_sim, root = 0)
-	
+
 	# Now gather all the moments to the master processor (rank 0)
 	if world.rank == 0:
 		
-		print(moments_sim_all[0].shape)
+		moments_sim_all =  np.array(moments_sim_all)
+
+		np.save(moments_all,moments_sim_all )
+
+		# Each item in moment list is a 11 x 36 array
+		# The rows are are 
+
+		list_moments = ['Final exam mark',\
+						'Overall course grade',\
+						'Expected final exam mark',\
+						'Expected final exam mark (other)',\
+						'Game session hours',\
+						'E-book hours',\
+						'MCQ session hours',\
+						'SAQ session hours',\
+						'av_player_happy_deploym_cumul',\
+						'av_mcq_attempt_nonrev_cumul',\
+						'SAQ attempts', \
+						'av_mcq_Cshare_nonrev_cumul',\
+						'SD final exam mark',\
+						'SD Overall course grade',\
+						'SD Expected final exam mark',\
+						'SD Expected final exam mark (other)',\
+						'SD Game session hours',\
+						'SD E-book hours',\
+						'SD MCQ session hours',\
+						'SD SAQ session hours',\
+						'sd_player_happy_deploym_cumul',\
+						'sd_mcq_attempt_nonrev_cumul',\
+						'SD SAQ attempts', \
+						'sd_mcq_Cshare_nonrev_cumul',\
+						'AC game session hours',\
+						'AC e-book session hours',\
+						'AC MCQ session hours',\
+						'AC SAQ session hours',\
+						'acmcq_Cshare_nonrev',\
+						'Corr. MCQ and SAQ hours',\
+						'Corr. game and SAQ hours',\
+						'Corr. game and MCQ hours',\
+						'Corr. e-book and SAQ hours',\
+						'Corr. e-book. and MCQ hours',\
+						'Corr. e-book and game hours',\
+						'Corr. ATAR and final exam mark']
+
+
+
+
+
+
+
 
 
 
