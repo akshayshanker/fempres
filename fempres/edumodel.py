@@ -120,12 +120,25 @@ class EduModel:
 
 def map_moments(moments_data):
 
+    """ Takes data moments, where each row corrsponds to a group x week
+        group referes to M x F x RCT group
+
+        The moments_data df should have group id column
+    """
+
+    # Get the group names 
     group_list = moments_data['group'].unique()
 
+    # Make a function to turn the group names into a list
     def gen_group_list(somelist):
         return {x: {} for x in somelist}
 
     moments_grouped_sorted = gen_group_list(group_list)
+
+    # List the moments names (col names in the data frame)
+    # and order them in the same order as the word doc 
+    # the order of the list should be the same as in sim
+    # moments mapped in gen_moments
 
     list_moments = ['av_final',\
                     'av_mark',\
@@ -164,23 +177,23 @@ def map_moments(moments_data):
                     'ceg_session_hours',\
                     'c_atar_ii']
 
-
+    # For each group, create an empty array of sorted moments 
     for keys in moments_grouped_sorted:
         moments_grouped_sorted[keys]['data_moments'] = np.empty((11,36))
 
-        # Do the mappings based on word_doc indices
-
+    # Map the moments to the array with cols as they are ordered
+    # in list_moments for each group
     for i in range(len(list_moments)):
         for key in moments_grouped_sorted:
             moments_data_for_gr = moments_data[moments_data['group'] == key]
             moments_grouped_sorted[key]['data_moments'][:,i] = moments_data_for_gr[list_moments[i]]
-
+    # Return the sorted moments for each group
     return moments_grouped_sorted
 
 
 class EduModelParams:
-    """ Parameterises class for the LifeCycleModel
-            Instance of LifeCycleParams contains 
+    """ Parameterises class for the EduModelk
+            Instance of EduModelk contains 
             parameter list, a paramterized EduModel
 
             Instance of Parameter class identified by
@@ -189,29 +202,31 @@ class EduModelParams:
             Todo
             ----
 
-
     """
 
     def __init__(self,
-                 mod_name,
-                 param_dict,
-                 U,
-                 U_z,
-                 random_draw=False,
-                 random_bounds=None,  # parameter bounds for randomly generated params
-                 param_random_means=None,  # mean of random param distribution
-                 param_random_cov=None,
-                 uniform = False):  # cov of random param distribution :
+                 mod_name, # name of model 
+                 param_dict, 
+                 U,        # beta shocks uniform draw
+                 U_z,       # zeta shocks uniform draw
+                 random_draw = False,   # True iff parameters generated randomly
+                 random_bounds = None,  # Parameter bounds for random draws 
+                 param_random_means = None,  # mean of random param distribution
+                 param_random_cov = None, # cov of random param distribution
+                 uniform = False):  # True iff  draw is uniform
+
+        # Generate a random ID for this param draw 
         self.param_id = ''.join(random.choices(
             string.ascii_uppercase + string.digits, k=6))+'_'+time.strftime("%Y%m%d-%H%M%S") + '_'+mod_name
         self.mod_name = mod_name
 
+        # If random draw is false, assign paramters from paramter dictionary pre-sets 
         if random_draw == False:
             param_deterministic = param_dict['parameters']
             parameters_draws = rand_p_generator(param_deterministic,
                                     random_bounds,
-                                    deterministic=1,
-                                    initial=uniform)
+                                    deterministic = 1,
+                                    initial = uniform)
 
             self.og = EduModel(param_dict, U, U_z, self.param_id, mod_name=mod_name)
             self.parameters = parameters_draws
@@ -276,30 +291,18 @@ if __name__ == "__main__":
     moments_data = pd.read_csv('{}moments_clean.csv'\
                     .format(settings))
 
-    moments_grouped_sorted  = map_moments(moments_data)
-
+    'moments_grouped_sorted'  = map_moments(moments_data)
+    sampmom[0][9] = 1
     edu_model = EduModelParams('test',
                                 edu_config['tau_00'],
                                 U,
                                 U_z,
                                 random_draw = True,
-                                uniform = True,
+                                uniform = False,
                                 param_random_means = sampmom[0], 
                                 param_random_cov = sampmom[1], 
                                 random_bounds = param_random_bounds)
 
     moments_sim = generate_study_pols(edu_model.og)
-
-
-    moments_sim_array = np.array(np.ravel(moments_sim))
-    moments_data_array = np.array(np.ravel(moments_grouped_sorted['tau_00']['data_moments']))
-
-    deviation = (moments_sim_array\
-                [~np.isnan(moments_data_array)]\
-                  - moments_data_array\
-                  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
-        
-    
-    # Import moments
 
 

@@ -7,10 +7,8 @@ generate a timeseries of simulation and generate moments
 
 # Import packages
 import sys
-
 from interpolation.splines import extrap_options as xto
 from interpolation.splines import eval_linear
-
 from quantecon.optimize import nelder_mead
 from numba import njit
 import time
@@ -38,6 +36,7 @@ def edu_solver_factory(og,verbose=False):
     """
 
     # Unpack  paramters from class
+
     # Reall T = number of teaching weeks (10) + study week (1) + final exam week (1) = 12
     T = og.T
     N = og.N
@@ -67,30 +66,33 @@ def edu_solver_factory(og,verbose=False):
     S_effort_to_IM = og.S_effort_to_IM
     fin_exam_grade = og.fin_exam_grade
 
-    # Final period value function (EV_{T})
+    # Final period value function (EV_{T}) and continuation value
     VF_prime_T = og.VT
 
     # Unpack thetas
-
     theta = np.array(og.config['theta'])
 
 
     @njit
-    def eval_obj(S_vec, # Study investment vector 
-                 m, # current exam prep
-                 mh, # current CW grade (as max possible at time t-1)
-                 beta, # discount realisation 
-                 VF_prime_ind, # continuation value conditioned on t exogenous state index
+    def eval_obj(S_vec, 
+                 m, 
+                 mh, 
+                 beta, 
+                 VF_prime_ind, 
                   t):
         
         """ Evaluates objective of Walue function for each t
 
+        Note that here we assume M_{t} is knowledge at t carried
+        over from the last period, depreciated and not including
+        new knowledge generated at t 
+
         Parameters
         --------
         S_vec : 4-D array
-                Vector of study hours
+                Vector of study hours (note hours in function defintion for S_effort_to_IM)
         m : float64
-             Exam knowledge at t
+             Exam knowledge at t (depreciated from previous period)
         mh: float64
              Coursework grade at t
         beta: float64
@@ -109,7 +111,7 @@ def edu_solver_factory(og,verbose=False):
         # If study hours exceed total hours, return penalty 
         # this ensures study hopurs are bounded 
         S_total = np.sum(S_vec)
-        if S_total >= H or S_vec[0]<0 or S_vec[1]<0 or S_vec[2]<0 or S_vec[3]<0 :
+        if S_total >= H or S_vec[0]<0 or S_vec[1]<0 or S_vec[2]<0 or S_vec[3]<0:
             return np.inf
 
         else:
@@ -153,9 +155,7 @@ def edu_solver_factory(og,verbose=False):
                     m = M[j]
                     mh = Mh[k]
 
-                    # Get the index of the cartesian product of all exogenous shocks 
-                    # the exogenous shock indexes the continuation value grids for t+1
-                    #print(all_shocks_ind)
+                    # Get the continuation value array for this exog. state
                     VF_prime_ind = VF_prime[i]
 
                     initial = np.array([5,5,5,5])
@@ -166,15 +166,18 @@ def edu_solver_factory(og,verbose=False):
                                          bounds = bounds,\
                                          args = (m, mh,beta, VF_prime_ind,t))
 
-                    # Solve for the RHS of Walue
+                    # Solve for the RHS of Walue 
+                    # Ordering in study policy vector same as study hours 
+                    # inputs in S_effort_to_IM definition 
                     S_pol[0,i,j,k] = sols.x[0]
                     S_pol[1,i,j,k] = sols.x[1]
                     S_pol[2,i,j,k] = sols.x[2]
                     S_pol[3,i,j,k] = sols.x[3]
 
-                    # Calculate total knowlege produced and new CW grade for study vector 
+                    # Calculate total knowlege produced and new CW grade for optimal study vector 
                     IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat\
-                            = S_effort_to_IM(S_pol[0,i,j,k], S_pol[1,i,j,k], S_pol[2,i,j,k],S_pol[3,i,j,k], m,mh,t)
+                            = S_effort_to_IM(S_pol[0,i,j,k], S_pol[1,i,j,k],\
+                                 S_pol[2,i,j,k],S_pol[3,i,j,k], m,mh,t)
                     m_prime = (1-d)*m + IM
                     mh_prime = mh + IMh
                     points_star = np.array([m_prime, mh_prime])
@@ -191,8 +194,8 @@ def edu_solver_factory(og,verbose=False):
         # make the exogenuos state index the last
         matrix_A = VF_new.transpose((1,2,0)) 
 
-        # rows of EBA_P2 correspond to time t all exogenous state index
-        # cols of EBA_P2 correspond to transition to t+1 expgenou state index
+        # rows of P_beta correspond to time t all exogenous state index
+        # cols of P_beta correspond to transition to t+1 exogenous state index
         matrix_B = P_beta 
 
         # numpy dot sum product over last axis of matrix_A (t+1 continuation value unconditioned)
@@ -205,9 +208,14 @@ def edu_solver_factory(og,verbose=False):
     @njit
     def run_TS_i(i, S_pol_all):
 
-        # The indices for time in the moments in this function and time-series will be as follows:
+        """ Generate a timeseries  for one agent
+        """
 
-        #   TS_all[0]: Week minus 1 is a dummy week to generate auto-corrs easily
+        #   The indices for time in the moments and this function and 
+        #   time-series will be as follows:
+
+        #   TS_all[0]: Week minus 1 is a dummy week to
+        #               generate auto-corrs easily using the np.cov function
         #   TS_all[1]: Teaching week 1
         #   TS_all[t]: Teaching week t
         #   ----
@@ -215,7 +223,7 @@ def edu_solver_factory(og,verbose=False):
         #   TS_all[11]: Study week
         #   TS_all[12]: Final exam week
 
-        # Generate empty grid
+        # Generate empty grid (recall we put in one extra week)
         TS_all = np.zeros((T+1,28))
 
         beta_ind = np.arange(len(beta_hat))\
@@ -230,6 +238,7 @@ def edu_solver_factory(og,verbose=False):
         
         for t in range(1,T):
 
+            # Capital and CW grade at time t
             m = TS_all[t-1, 1]*(1-d)
             mh = TS_all[t-1, 4]
 
@@ -246,8 +255,8 @@ def edu_solver_factory(og,verbose=False):
 
             # Update with vals for time t
             TS_all[t,0] = TS_all[t-1, 1] # t knowledge capital 
-            TS_all[t,1] = m + IM # t+1 knowledge capotal
-            TS_all[t,2] = mh # t-1 coursework grade
+            TS_all[t,1] = m + IM # t+1 knowledge capital
+            TS_all[t,2] = mh # t-1 coursework grade (CW grade at the beggining of t!)
             TS_all[t,3] = min(mh + IMh,100) # t+1 coursework grade (coursework grade at the end of t)
             TS_all[t,4] = TS_all[t-1,5]  # t-1  S_saq 
             TS_all[t,5] = TS_all[t-1,5] + S_saq # t  S_saq cum
@@ -258,7 +267,7 @@ def edu_solver_factory(og,verbose=False):
             TS_all[t,10] = TS_all[t-1,11] # t-1  S_hap
             TS_all[t,11] = S_hap + TS_all[t-1,11] # t  S_hap cum
             TS_all[t,12] = TS_all[t-1,13] # t-1  total study
-            TS_all[t,13] = S_total # t total study
+            TS_all[t,13] = S_total # t total study (not cum)
             TS_all[t,14] = TS_all[t-1,15]  # t-1  S_saq_hat 
             TS_all[t,15] = S_saq_hat + TS_all[t-1,15] # t  S_saq_hat cum
             TS_all[t,16] = TS_all[t-1,17]  # t-1  S_eb_hat
@@ -269,14 +278,14 @@ def edu_solver_factory(og,verbose=False):
             TS_all[t,21] = TS_all[t-1,21] + S_hap_hat # t  S_hap_hat cum
 
             TS_all[t,22] = TS_all[t-1, 23]
-            TS_all[t,23] = theta[t]
+            TS_all[t,23] = theta[t]*(.5+m/M[-1])/t + TS_all[t,23]*(t-1)/t
 
             beta_ind = np.arange(len(beta_hat))\
                 [np.searchsorted(np.cumsum(beta_stat), U[i,t])]
             beta = beta_hat[beta_ind]
 
-        TS_all[T,24] = fin_exam_grade(zeta_hat[zeta_ind], TS_all[T-1,1]*(1-d)) # Actual exam grade
-        TS_all[T,25] = fin_exam_grade(zeta_hat[zetah_ind], TS_all[T-1,1]*(1-d)) # Randomised percieved exam grade
+        TS_all[T,24] = fin_exam_grade(zeta_hat[zeta_ind], TS_all[T-1,1]*(1-d))*rho_E # Actual exam grade
+        TS_all[T,25] = fin_exam_grade(zeta_hat[zetah_ind], TS_all[T-1,1]*(1-d))*rho_E  # Randomised percieved exam grade
         TS_all[T,26] = rho_E*TS_all[T,24] + (1-rho_E)*TS_all[T-1,3] # Actual final mark
         TS_all[T,27] = zeta_hat[zeta_ind] # Actual final shock 
 
@@ -286,7 +295,6 @@ def edu_solver_factory(og,verbose=False):
             TS_all[t,25] = TS_all[T,25]
             TS_all[t,26] = TS_all[T,26]
             TS_all[t,27] = TS_all[T,27]
-
 
         return TS_all
 
@@ -333,6 +341,11 @@ def edu_solver_factory(og,verbose=False):
             cov[t,:] = np.cov(TSALL[:,t,:], rowvar=False)
 
         # Create moments in the same order as data moments
+        # We remove the moments for the first week minuts 1 in the 
+        # means table since that is a dummy week
+        # We first populate moments out with the full 12 weeks
+        # (including the exam week)
+        # then remove the exam week so we have 11 teaching/study weeks
 
         moments_out = np.empty((T, 36))
 
@@ -373,7 +386,7 @@ def edu_solver_factory(og,verbose=False):
         # Autocorrelations
         moments_out[:,24] = cov[1:T+1,11,10] # acgame_session_hours
         moments_out[:,25] = cov[1:T+1,7,6] # acebook_session_hours
-        moments_out[:,26] = cov[1:T+1,21,20] # acmcq_session_hours
+        moments_out[:,26] = cov[1:T+1,8,9] # acmcq_session_hours
         moments_out[:,27] = cov[1:T+1,5,4] # acsaq_session_hours
         moments_out[:,28] = cov[1:T+1,23,22] # acmcq_Cshare_nonrev
 
@@ -388,6 +401,7 @@ def edu_solver_factory(og,verbose=False):
         # Atar 
         moments_out[:,35] = cov[1:T+1,27,24] # c_atar_ii 
 
+        # Now we take moments for 11 weeks including study week 
         return moments_out[0:T-1,:]
    
     return edu_iterate, TSALL,gen_moments

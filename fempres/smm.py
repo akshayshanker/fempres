@@ -45,13 +45,15 @@ def gen_RMS(edu_model,\
 
 	Parameters
 	---------
+	edu_model: EduModel object
+	moments_data: array
+				  sorted moments for group
 
 	Returns 
 	------
 	error : 
 
 	"""
-		
 	moments_sim = generate_study_pols(edu_model.og)
 
 
@@ -80,21 +82,24 @@ def load_tm1_iter():
 	return gamma_XEM, S_star,t
 
 def iter_SMM(config, 			 # configuration settings for the model name 
-			 model_name, 		 # name of model 
+			 model_name, 		 # name of model (tau group name)
 			 U, U_z, 
 			 param_random_bounds, # bounds for parameter draws
 			 sampmom, 	    # t-1 parameter means 
 			 moments_data,  # data moments 
 			 gamma_XEM, 	# lower elite performer
 			 S_star, 		# upper elite performer
-			 t, tau_world,N_elite):	# iteration number 
+			 t,		# iteration 
+			 tau_world, # communicate class for groups
+			 N_elite):	# iteration number 
 	
 	""" Initializes parameters and EduModel model and peforms 
 		one iteration of the SMM, returning updated sampling distribution
+		for the parameters
 
 	'"""
 
-	# Generate LifeCycleParam class (master on layer 1: new random sample)
+	# Draw uniform parameters for the first iteration 
 	if t==0:
 		uniform = True
 	else:
@@ -115,18 +120,15 @@ def iter_SMM(config, 			 # configuration settings for the model name
 
 	parameters = edu_model.parameters
 
-	#if tau_world.rank == 0:
-		#print("Random Parameters drawn, distributng iteration {} for tau_group {}".format(t,model_name))
+	if tau_world.rank == 0:
+		print("Random Parameters drawn, distributng iteration {} \
+					for tau_group {}".format(t,model_name))
 		
-
-	RMS =  gen_RMS(edu_model,
-					moments_data)
-
+	RMS =  gen_RMS(edu_model, moments_data)
 
 	errors_ind = [edu_model.param_id, np.float64(RMS)]
 
-	# Gather parameters and corresponding errors from all ranks
-	# Only layer 1 rank 0 values are not None
+	# Gather parameters and corresponding errors from all ranks 
 	tau_world.Barrier()
 
 	indexed_errors = tau_world.gather(errors_ind, root = 0)
@@ -135,8 +137,10 @@ def iter_SMM(config, 			 # configuration settings for the model name
 
 	# tau_world master does selection of elite parameters and drawing new means 
 	if tau_world.rank == 0:
-		indexed_errors = np.array([item for item in indexed_errors if item[0]!='none'])
-		parameter_list = [item for item in parameter_list if item is not None]
+		indexed_errors = \
+			np.array([item for item in indexed_errors if item[0]!='none'])
+		parameter_list\
+			 = [item for item in parameter_list if item is not None]
  
 		parameter_list_dict = dict([(param['param_id'], param)\
 							 for param in parameter_list])
@@ -144,7 +148,8 @@ def iter_SMM(config, 			 # configuration settings for the model name
 		errors_arr = np.array(indexed_errors[:,1]).astype(np.float64)
 
 
-		error_indices_sorted = np.take(indexed_errors[:,0], np.argsort(-errors_arr))
+		error_indices_sorted = np.take(indexed_errors[:,0],\
+									 np.argsort(-errors_arr))
 		errors_arr_sorted = np.take(errors_arr, np.argsort(-errors_arr))
 
 		number_N = len(error_indices_sorted)
@@ -170,7 +175,8 @@ def iter_SMM(config, 			 # configuration settings for the model name
 		print("...generated and saved sampling moments")
 		print("...time elapsed: {} minutes".format((time.time()-start)/60))
 
-		return number_N, [means, cov], gamma_XEM, S_star, error_gamma, error_S, elite_indices[0]
+		return number_N, [means, cov], gamma_XEM, S_star, error_gamma,\
+											 error_S, elite_indices[0]
 	else:
 		return 1 
 
@@ -179,7 +185,7 @@ def gen_param_moments(parameter_list_dict,\
 						 selected,\
 						 weights):
 
-	""" Estamate params of a sampling distribution
+	""" Estimate params of a sampling distribution
 
 	Parameters
 	----------
@@ -199,7 +205,6 @@ def gen_param_moments(parameter_list_dict,\
 
 	sample_params = []
 
-	#print(parameter_list_dict.keys())
 	for i in range(len(selected)):
 		rand_params_i = []
 		for key in param_random_bounds.keys():
@@ -209,8 +214,8 @@ def gen_param_moments(parameter_list_dict,\
 		sample_params.append(rand_params_i)
 
 	sample_params = np.array(sample_params)
-	means = np.average(sample_params, axis=0)
-	cov = np.cov(sample_params, rowvar=0)
+	means = np.average(sample_params, axis = 0)
+	cov = np.cov(sample_params, rowvar = 0)
 
 	return means, cov
 
@@ -389,6 +394,3 @@ if __name__ == "__main__":
 		sampmom = tau_world.bcast(sampmom, root = 0)
 		gamma_XEM = tau_world.bcast(gamma_XEM, root = 0) 
 		S_star = tau_world.bcast(S_star, root = 0)
-
-
-		#world.Barrier()

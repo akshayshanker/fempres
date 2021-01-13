@@ -7,8 +7,8 @@ zeta_star,0.001,0.5
 sigma_zeta,0.001,2
 zeta_hstar,0.001,2
 sigma_hzeta,0.001,2
-alpha,0.001,100
-psi_E,0.0001,0.01
+alpha,0.00001,10
+psi_E,0.0001,4
 gamma_1,0,1
 gamma_2,0,1
 gamma_3,0,1

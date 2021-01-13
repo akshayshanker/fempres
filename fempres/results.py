@@ -89,14 +89,19 @@ if __name__ == "__main__":
 
 	moments_sim = generate_study_pols(edu_model.og)
 
+
 	moments_sim_all = world.gather(moments_sim, root = 0)
+	param_all = world.gather(param_means, root = 0)
 
 	# Now gather all the moments to the master processor (rank 0)
 	if world.rank == 0:
 		
 		moments_sim_all =  np.array(moments_sim_all)
+		param_all = np.array(param_all)
 
-		np.save(moments_all,moments_sim_all )
+
+		np.save('moments_all',moments_sim_all )
+		np.save('param_all', param_all)
 
 		# Each item in moment list is a 11 x 36 array
 		# The rows are are 
@@ -137,6 +142,8 @@ if __name__ == "__main__":
 						'Corr. e-book. and MCQ hours',\
 						'Corr. e-book and game hours',\
 						'Corr. ATAR and final exam mark']
+
+		#list_params = param_random_bounds.keys()
 
 
 
