@@ -20,10 +20,12 @@ def edumodel_function_factory(params, theta,share_saq,\
 	psi_E = params['psi_E']
 	alpha = params['alpha']
 	H  = params['H']
-	phi = params['phi']
+	phi = params['phi']*100/2.5
 	a = params['a']
 	b = params['b']
 	M_max = params['M_max']
+	varphi = params['varphi']
+	varphi_sim = params['varphi_sim']
 
 	# Translog parameters
 	gamma_1 = params['gamma_1']
@@ -47,7 +49,6 @@ def edumodel_function_factory(params, theta,share_saq,\
 
 	# Third row = 0
 	gamma_33 = params['gamma_33']
-	gamma_34 = params['gamma_34']
 	gamma_34 = 0 - gamma_13 - gamma_23 - gamma_33
 
 	# Fourth row = 0 by setting col.sum = 0 
@@ -58,7 +59,6 @@ def edumodel_function_factory(params, theta,share_saq,\
 	iota_i = params['iota_i']
 
 	# MCQ correct rate and study share vectors 
-	theta = np.array(theta)
 	s_share_saq = np.array(share_saq)
 	s_share_eb = np.array(share_eb)
 	s_share_mcq = np.array(share_mcq)
@@ -105,6 +105,13 @@ def edumodel_function_factory(params, theta,share_saq,\
 
 		return ((1-np.exp(-psi_E*(zeta_T+M_T))))*100
 
+	@njit 
+	def correct_mcq_rate(m,t):
+		return ((1-np.exp(-varphi*(m)/((t+1)**2))))
+
+	@njit 
+	def hours_to_hap(m):
+		return (1-np.exp(-varphi_sim*(m)))/varphi_sim
 
 	@njit 
 	def S_effort_to_IM(S_saq, S_eb, S_mcq,S_hap, m,mh,t):
@@ -140,10 +147,15 @@ def edumodel_function_factory(params, theta,share_saq,\
 		# stock 
 
 		# Make sure study hours are non-negative 
-		S_saq = max(0,S_saq)
-		S_eb = max(0,S_eb)
-		S_mcq = max(0,S_mcq)
-		S_hap = max(0,S_hap)
+		S_saq = max(0.01,S_saq)
+		S_eb = max(0.01,S_eb)
+		S_mcq = max(0.01,S_mcq)
+		S_hap = max(0.01,S_hap)
+
+		if t < 4:
+			S_hap = .01
+		if t == 0:
+			S_saq = .01
 
 		# Calculate the translog
 		lnIM = np.log(phi)  + gamma_1*np.log(S_saq) \
@@ -157,58 +169,50 @@ def edumodel_function_factory(params, theta,share_saq,\
 							+ gamma_23*np.log(S_eb)*np.log( S_mcq)\
 							+ gamma_24*np.log(S_eb)*np.log(S_hap)\
 							+ gamma_34*np.log(S_mcq)*np.log(S_hap)\
-							+ gamma_11*np.log(S_saq)*np.log( S_saq)\
 							+ gamma_22*np.log(S_eb)*np.log(S_eb)\
 							+ gamma_33*np.log(S_mcq)*np.log(S_mcq)\
 							+ gamma_44*np.log(S_hap)*np.log(S_hap)
 		
 		# Knowledge creation is augmented by previous knowledge 
 
-		IM = min(100,np.exp(lnIM))*m/M_max
-
+		IM = min(100,np.exp(lnIM))
 		# Observable study outputs
 
 		if s_share_mcq[t] > 0:
-			S_mcq_hat = S_mcq/s_share_mcq[t]
+			S_mcq_hat = (S_mcq/s_share_mcq[t])
+
 		else:
 			S_mcq_hat  = 0
 
 		if s_share_hap[t] >0:
-		  S_hap_hat =  S_hap/s_share_hap[t]
+		  	S_hap_hat =  (S_hap/s_share_hap[t])*hours_to_hap(m)
+		  	
 		else:
 		 	S_hap_hat = 0
 
 		if s_share_eb[t]> 0:
-			S_eb_hat = 	S_eb/s_share_eb[t]
+			S_eb_hat = 	(S_eb/s_share_eb[t])
 		else: 
 			S_eb_hat =0
 
 		if s_share_saq[t]> 0:
-			S_saq_hat =S_saq/s_share_saq[t]
+			S_saq_hat = (S_saq/s_share_saq[t])
 		else:
 			S_saq_hat = 0
 
 		# Rate of current MCQ answers 
-		rate_of_correct = theta[t]*(.5 +m/M_max)
-
+		rate_of_correct = correct_mcq_rate(m,t)
 
 		# Calculate coursework grade points generated 
 		IMh1 = max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\
 					+ b*S_hap_hat)
 
 		# Ensure overall coursework grade does not exceed 100
-
 		if mh + IMh1< 100:
 			IMh = min(100- mh, IMh1)
 			
 		else:
 			IMh = 0
-
-		#if IMh< 0:
-		#	print(S_mcq_hat)
-		#	print(S_hap_hat)
-		#	print(s_share_hap[t])
-			#print(IMh)
 
 		return IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat
 
@@ -220,6 +224,6 @@ def edumodel_function_factory(params, theta,share_saq,\
 		# Ensure non-course hours do not exceed 168
 		l = max(l, 1e-200)
 
-		return np.log(l) + alpha*np.log(1+ IMh)
+		return np.log(l) + alpha*np.log(1+ (1-rho_E)*IMh)
 
-	return u_grade, fin_exam_grade, S_effort_to_IM, u_l
+	return u_grade, fin_exam_grade, S_effort_to_IM, u_l, correct_mcq_rate

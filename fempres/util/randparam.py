@@ -27,19 +27,17 @@ def rand_p_generator(param_deterministic, # dictionary containing deterministic 
         np.array([(bdns) for key, bdns in param_random_bounds.items()] ) 
 
     # generate random sample
-    
+    param_random_cov = np.array(param_random_cov)
     random_draw = np.random.uniform(0, 1)
     # noise injection rate of 10%
-    if random_draw<.1:
-        initial = 1
-
+    if random_draw<.15:
+        np.fill_diagonal(param_random_cov, param_random_cov.diagonal()*3)
 
     in_range = False
     if deterministic == 0 and initial == 0:
 
         while in_range == False:
             draws = np.random.multivariate_normal(param_random_means, param_random_cov)
-
             for i,key in zip(np.arange(len(draws)),param_random_bounds.keys()):
                 parameters[key]  = draws[i]
 

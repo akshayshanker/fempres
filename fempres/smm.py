@@ -71,15 +71,20 @@ def gen_RMS(edu_model,\
 	return 1-np.sqrt((1/N_err)*np.sum(np.square(deviation))/norm)
 
 
-def load_tm1_iter():
+def load_tm1_iter(est_name, model_name, load_saved = True):
 	""" Initializes array of best performer and least best in the 
 		elite set (see notationin Kroese et al)
 	""" 
 
-	S_star,gamma_XEM	= np.full(d,0), np.full(d,0)
+	S_star,gamma_XEM	= np.full(d+1,0), np.full(d+1,0)
 	t = 0
+	if load_saved == True:
+		sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format(est_name + '/'+ model_name),"rb"))
 
-	return gamma_XEM, S_star,t
+	else:
+		sampmom = [0,0]
+
+	return gamma_XEM, S_star,t, sampmom
 
 def iter_SMM(config, 			 # configuration settings for the model name 
 			 model_name, 		 # name of model (tau group name)
@@ -219,14 +224,29 @@ def gen_param_moments(parameter_list_dict,\
 
 	return means, cov
 
+
+
 def map_moments(moments_data):
 
+	""" Takes data moments, where each row corrsponds to a group x week
+		group referes to M x F x RCT group
+
+		The moments_data df should have group id column
+	"""
+
+	# Get the group names 
 	group_list = moments_data['group'].unique()
 
+	# Make a function to turn the group names into a list
 	def gen_group_list(somelist):
 		return {x: {} for x in somelist}
 
 	moments_grouped_sorted = gen_group_list(group_list)
+
+	# List the moments names (col names in the data frame)
+	# and order them in the same order as the word doc 
+	# the order of the list should be the same as in sim
+	# moments mapped in gen_moments
 
 	list_moments = ['av_final',\
 					'av_mark',\
@@ -257,6 +277,7 @@ def map_moments(moments_data):
 					'acmcq_session_hours',\
 					'acsaq_session_hours',\
 					'acmcq_Cshare_nonrev',\
+					'acmcq_Cattempt_nonrev',\
 					'cmcsaq_session_hours',\
 					'cgsaq_session_hours',\
 					'cgmcq_session_hours',\
@@ -265,15 +286,19 @@ def map_moments(moments_data):
 					'ceg_session_hours',\
 					'c_atar_ii']
 
+	# For each group, create an empty array of sorted moments 
 	for keys in moments_grouped_sorted:
-		moments_grouped_sorted[keys]['data_moments'] = np.empty((11,36))
+		moments_grouped_sorted[keys]['data_moments'] = np.empty((11,37))
 
+	# Map the moments to the array with cols as they are ordered
+	# in list_moments for each group
 	for i in range(len(list_moments)):
 		for key in moments_grouped_sorted:
 			moments_data_for_gr = moments_data[moments_data['group'] == key]
 			moments_grouped_sorted[key]['data_moments'][:,i] = moments_data_for_gr[list_moments[i]]
-
+	# Return the sorted moments for each group
 	return moments_grouped_sorted
+
 
 if __name__ == "__main__":
 
@@ -283,12 +308,12 @@ if __name__ == "__main__":
 
 	
 	# Estimation parameters  
-	tol = 1E-8
-	N_elite = 50
+	tol = 1E-14
+	N_elite = 60
 	d = 3
-	estimation_name = 'test'
+	estimation_name = 'test_jan16'
 	world = MPI4py.COMM_WORLD
-	number_tau_groups = 8 
+	number_tau_groups = 2
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -324,15 +349,13 @@ if __name__ == "__main__":
 		for row in reader_ran:
 			param_random_bounds[row['parameter']] = np.float64([row['LB'],
 																row['UB']])
+	
+	U = np.load(scr_path+'/'+ 'U.npy')
+	U_z = np.load(scr_path+'/'+ 'U_z.npy')
 
-	# Generate random points for beta
-	U = np.random.rand(edu_config[model_name]['parameters']['N'],\
-						edu_config[model_name]['parameters']['T'])
 
-	# Generate random points for ability and percieved ability 
-	U_z = np.random.rand(edu_config[model_name]['parameters']['N'],2)
+	tau_world.Barrier()	
 
-	# Initialize the model with uniform values on each core 
 	with open('{}random_param_bounds.csv'\
 	.format(settings_folder), newline='') as pscfile:
 		reader_ran = csv.DictReader(pscfile)
@@ -343,9 +366,10 @@ if __name__ == "__main__":
 	start = time.time()
 
 	# Initialize the SMM error grid
-	gamma_XEM, S_star,t = load_tm1_iter()
+	gamma_XEM, S_star,t, sampmom = load_tm1_iter(estimation_name,model_name)
 	error = 1 
-	sampmom = [0,0]
+	t = 1
+	#sampmom = [0,0]
 	
 	# Iterate on the SMM
 	while error > tol:
@@ -364,6 +388,7 @@ if __name__ == "__main__":
 			#print(sampmom[0])
 			number_N, sampmom, gamma_XEM, S_star, error_gamma, error_S, top_ID = iter_return
 			error_cov = np.abs(np.max(sampmom[1]))
+
 			
 			pickle.dump(gamma_XEM,open("/scratch/pv33/edu_model_temp/{}/{}/gamma_XEM.smms"\
 						.format(estimation_name, model_name),"wb"))
@@ -394,3 +419,4 @@ if __name__ == "__main__":
 		sampmom = tau_world.bcast(sampmom, root = 0)
 		gamma_XEM = tau_world.bcast(gamma_XEM, root = 0) 
 		S_star = tau_world.bcast(S_star, root = 0)
+		gc.collect()

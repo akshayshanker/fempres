@@ -15,6 +15,7 @@ from sklearn.utils.extmath import cartesian
 from quantecon import tauchen
 from interpolation.splines import UCGrid, CGrid, nodes, eval_linear
 import copy
+import pandas as pd
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -41,7 +42,7 @@ class EduModel:
         self.__dict__.update(config['parameters'])
 
         self.u_grade, self.fin_exam_grade,\
-            self.S_effort_to_IM, self.u_l\
+            self.S_effort_to_IM, self.u_l, self.correct_mcq_rate\
              = edumodel_function_factory(config['parameters'],
                                             config['theta'],
                                             config['share_saq'],
@@ -169,6 +170,7 @@ def map_moments(moments_data):
                     'acmcq_session_hours',\
                     'acsaq_session_hours',\
                     'acmcq_Cshare_nonrev',\
+                    'acmcq_Cattempt_nonrev',\
                     'cmcsaq_session_hours',\
                     'cgsaq_session_hours',\
                     'cgmcq_session_hours',\
@@ -179,7 +181,7 @@ def map_moments(moments_data):
 
     # For each group, create an empty array of sorted moments 
     for keys in moments_grouped_sorted:
-        moments_grouped_sorted[keys]['data_moments'] = np.empty((11,36))
+        moments_grouped_sorted[keys]['data_moments'] = np.empty((11,37))
 
     # Map the moments to the array with cols as they are ordered
     # in list_moments for each group
@@ -264,7 +266,7 @@ if __name__ == "__main__":
     # and random param bounds
     settings = 'settings/'
     # Name of model
-    model_name = 'test'
+    model_name = 'tau30'
     # Path for scratch folder (will contain latest estimated means)
     scr_path = "/scratch/pv33/edu_model_temp/"
 
@@ -287,20 +289,23 @@ if __name__ == "__main__":
     # Generate random points for ability and percieved ability 
     U_z = np.random.rand(edu_config['baseline_lite']['parameters']['N'],2)
 
+    sampmom[0][9] =.001
+    sampmom[0][8] =.0000001
+    sampmom[1][9,9] = 0
 
     moments_data = pd.read_csv('{}moments_clean.csv'\
                     .format(settings))
 
-    'moments_grouped_sorted'  = map_moments(moments_data)
-    sampmom[0][9] = 1
+    moments_grouped_sorted  = map_moments(moments_data)
+
     edu_model = EduModelParams('test',
-                                edu_config['tau_00'],
+                                edu_config['tau_30'],
                                 U,
                                 U_z,
                                 random_draw = True,
-                                uniform = False,
+                                uniform = True,
                                 param_random_means = sampmom[0], 
-                                param_random_cov = sampmom[1], 
+                                param_random_cov = np.zeros(np.shape(sampmom[1])), 
                                 random_bounds = param_random_bounds)
 
     moments_sim = generate_study_pols(edu_model.og)

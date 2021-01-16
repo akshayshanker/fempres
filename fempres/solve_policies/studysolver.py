@@ -13,6 +13,7 @@ from quantecon.optimize import nelder_mead
 from numba import njit
 import time
 import numpy as np
+import gc
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -65,12 +66,12 @@ def edu_solver_factory(og,verbose=False):
     u_l = og.u_l
     S_effort_to_IM = og.S_effort_to_IM
     fin_exam_grade = og.fin_exam_grade
+    correct_mcq_rate = og.correct_mcq_rate
 
     # Final period value function (EV_{T}) and continuation value
     VF_prime_T = og.VT
 
     # Unpack thetas
-    theta = np.array(og.config['theta'])
 
 
     @njit
@@ -123,7 +124,7 @@ def edu_solver_factory(og,verbose=False):
             period_utl = u_l(S_total,IMh)
 
             # Next period exam knowledge 
-            m_prime = (1-d)*m + IM
+            m_prime = min((1-d)*m + IM,M[-1])
 
             # Evalate next period CW grade  
             # (recall upper bound is already determined by S_effort_to_IM)
@@ -178,6 +179,7 @@ def edu_solver_factory(og,verbose=False):
                     IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat\
                             = S_effort_to_IM(S_pol[0,i,j,k], S_pol[1,i,j,k],\
                                  S_pol[2,i,j,k],S_pol[3,i,j,k], m,mh,t)
+
                     m_prime = (1-d)*m + IM
                     mh_prime = mh + IMh
                     points_star = np.array([m_prime, mh_prime])
@@ -224,7 +226,8 @@ def edu_solver_factory(og,verbose=False):
         #   TS_all[12]: Final exam week
 
         # Generate empty grid (recall we put in one extra week)
-        TS_all = np.zeros((T+1,28))
+        TS_all = np.zeros((T+1,30))
+        TS_all[0, 1] = 1
 
         beta_ind = np.arange(len(beta_hat))\
                 [np.searchsorted(np.cumsum(beta_stat), U[i,0])]
@@ -240,7 +243,10 @@ def edu_solver_factory(og,verbose=False):
 
             # Capital and CW grade at time t
             m = TS_all[t-1, 1]*(1-d)
-            mh = TS_all[t-1, 4]
+
+            #print(m)
+
+            mh = TS_all[t-1, 3]
 
             points  = np.array([m,mh])
 
@@ -248,14 +254,20 @@ def edu_solver_factory(og,verbose=False):
             S_eb = eval_linear(MM, S_pol_all[t-1, 1,beta_ind,:],points)
             S_mcq = eval_linear(MM, S_pol_all[t-1, 2,beta_ind,:],points)
             S_hap = eval_linear(MM, S_pol_all[t-1, 3,beta_ind,:],points)
-            S_total = S_hap + S_eb + S_mcq + S_hap
+
+
+            if t < 5:
+                S_hap =0 
+            if t == 1:
+                S_saq = 0
+            
+            S_total = S_saq + S_eb + S_mcq + S_hap
 
             IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat\
                 = S_effort_to_IM(S_saq, S_eb, S_mcq,S_hap, m,mh,t-1)
-
             # Update with vals for time t
             TS_all[t,0] = TS_all[t-1, 1] # t knowledge capital 
-            TS_all[t,1] = m + IM # t+1 knowledge capital
+            TS_all[t,1] = min(M[-1],m + IM)# t+1 knowledge capital
             TS_all[t,2] = mh # t-1 coursework grade (CW grade at the beggining of t!)
             TS_all[t,3] = min(mh + IMh,100) # t+1 coursework grade (coursework grade at the end of t)
             TS_all[t,4] = TS_all[t-1,5]  # t-1  S_saq 
@@ -278,15 +290,21 @@ def edu_solver_factory(og,verbose=False):
             TS_all[t,21] = TS_all[t-1,21] + S_hap_hat # t  S_hap_hat cum
 
             TS_all[t,22] = TS_all[t-1, 23]
-            TS_all[t,23] = theta[t]*(.5+m/M[-1])/t + TS_all[t,23]*(t-1)/t
+            TS_all[t,23] = correct_mcq_rate(m,t)/t + TS_all[t-1,23]*(t-1)/t # Check this calculation 
 
-            beta_ind = np.arange(len(beta_hat))\
-                [np.searchsorted(np.cumsum(beta_stat), U[i,t])]
-            beta = beta_hat[beta_ind]
+            TS_all[t,28] = TS_all[t-1, 29]  # t-1 mcq_Cattempt_nonrev 
+            TS_all[t,29] = TS_all[t-1, 29] + correct_mcq_rate(m,t)*S_mcq_hat # t mcq_Cattempt_nonrev 
+
+            beta_ind_new = np.arange(len(beta_hat))\
+                [np.searchsorted(np.cumsum(P_beta[beta_ind]), U[i,t])]
+            beta = beta_hat[beta_ind_new]
+            beta_ind = beta_ind_new
+
+
 
         TS_all[T,24] = fin_exam_grade(zeta_hat[zeta_ind], TS_all[T-1,1]*(1-d))*rho_E # Actual exam grade
         TS_all[T,25] = fin_exam_grade(zeta_hat[zetah_ind], TS_all[T-1,1]*(1-d))*rho_E  # Randomised percieved exam grade
-        TS_all[T,26] = rho_E*TS_all[T,24] + (1-rho_E)*TS_all[T-1,3] # Actual final mark
+        TS_all[T,26] = TS_all[T,24] + (1-rho_E)*TS_all[T-1,3] # Actual final mark
         TS_all[T,27] = zeta_hat[zeta_ind] # Actual final shock 
 
         # Fill in final exam marks into previous periods 
@@ -300,7 +318,7 @@ def edu_solver_factory(og,verbose=False):
 
     @njit 
     def TSALL(S_pol_all):
-        TS_all = np.empty((N,T+1, 28))
+        TS_all = np.empty((N,T+1, 30))
 
         for i in range(N):
             TS_all[i,:,:] = run_TS_i(i,S_pol_all )
@@ -332,13 +350,14 @@ def edu_solver_factory(og,verbose=False):
 
     def gen_moments(TSALL):
 
-        means = np.empty((T+1,28))
-        cov = np.empty((T+1,28,28))
+        means = np.empty((T+1,30))
+        cov = np.empty((T+1,30,30))
         
         for t in range(1,T+1):
 
             means[t] = np.mean(TSALL[:,t,:], axis = 0)
             cov[t,:] = np.cov(TSALL[:,t,:], rowvar=False)
+        #print(cov)
 
         # Create moments in the same order as data moments
         # We remove the moments for the first week minuts 1 in the 
@@ -347,7 +366,7 @@ def edu_solver_factory(og,verbose=False):
         # (including the exam week)
         # then remove the exam week so we have 11 teaching/study weeks
 
-        moments_out = np.empty((T, 36))
+        moments_out = np.zeros((T, 37))
 
         # Final grades
         moments_out[:,0] = means[1:T+1,24]# av_final
@@ -368,38 +387,40 @@ def edu_solver_factory(og,verbose=False):
         moments_out[:,11] = means[1:T+1,23] # av_mcq_Cshare_nonrev_cumul
 
         # SDs 
-        moments_out[:,12] = cov[1:T+1,24,24] # sd_final
-        moments_out[:,13] = cov[1:T+1,26,26] # sd_mark
-        moments_out[:,14] = cov[1:T+1,25,25] # sd_markw13_exp1
-        moments_out[:,15] = cov[1:T+1,25,25] # sd_markw13_exp2
+        moments_out[:,12] = np.std(TSALL[:,1: T+1,24], axis = 0) # sd_final
+        moments_out[:,13] = np.std(TSALL[:,1: T+1,26], axis = 0)   # sd_mark
+        moments_out[:,14] = np.std(TSALL[:,1: T+1,25], axis = 0)   # sd_markw13_exp1
+        moments_out[:,15] = np.std(TSALL[:,1: T+1,25], axis = 0) # sd_markw13_exp2
 
-        moments_out[:,16] = cov[1:T+1,11,11] # sd_game_session_hours_cumul
-        moments_out[:,17] = cov[1:T+1,7,7] # sd_ebook_session_hours_cumul
-        moments_out[:,18] = cov[1:T+1,9,9] # sd_mcq_session_hours_cumul
-        moments_out[:,19] = cov[1:T+1,5,5] # sd_saq_session_hours_cumul
+        moments_out[:,16] = np.std(TSALL[:,1: T+1,11], axis = 0)   # sd_game_session_hours_cumul
+        moments_out[:,17] = np.std(TSALL[:,1: T+1,7], axis = 0)  # sd_ebook_session_hours_cumul
+        moments_out[:,18] = np.std(TSALL[:,1: T+1,9], axis = 0)   # sd_mcq_session_hours_cumul
+        moments_out[:,19] = np.std(TSALL[:,1: T+1,5], axis = 0)  # sd_saq_session_hours_cumul
 
-        moments_out[:,20] = cov[1:T+1,21,21] # sd_player_happy_deploym_cumul
-        moments_out[:,21] = cov[1:T+1,19,19] # sd_mcq_attempt_nonrev_cumul
-        moments_out[:,22] = cov[1:T+1,15,15] # sd_sa_attempt_cumul
-        moments_out[:,23] = cov[1:T+1,23,23] # sd_mcq_Cshare_nonrev_cumul
+        moments_out[:,20] = np.std(TSALL[:,1: T+1,21], axis = 0)  # sd_player_happy_deploym_cumul
+        moments_out[:,21] = np.std(TSALL[:,1: T+1,19], axis = 0)  # sd_mcq_attempt_nonrev_cumul
+        moments_out[:,22] = np.std(TSALL[:,1: T+1,15], axis = 0)   # sd_sa_attempt_cumul
+        moments_out[:,23] = np.std(TSALL[:,1: T+1,23], axis = 0)  # sd_mcq_Cshare_nonrev_cumul
 
         # Autocorrelations
-        moments_out[:,24] = cov[1:T+1,11,10] # acgame_session_hours
-        moments_out[:,25] = cov[1:T+1,7,6] # acebook_session_hours
-        moments_out[:,26] = cov[1:T+1,8,9] # acmcq_session_hours
-        moments_out[:,27] = cov[1:T+1,5,4] # acsaq_session_hours
-        moments_out[:,28] = cov[1:T+1,23,22] # acmcq_Cshare_nonrev
+        moments_out[:,24] = cov[1:T+1,11,10]/(np.std(TSALL[:,1: T+1,11], axis = 0)*np.std(TSALL[:,1: T+1,10], axis = 0) ) # acgame_session_hours
+        moments_out[:,25] = cov[1:T+1,7,6]/(np.std(TSALL[:,1: T+1,6], axis = 0)*np.std(TSALL[:,1: T+1,7], axis = 0) )  # acebook_session_hours
+        moments_out[:,26] = cov[1:T+1,8,9]/(np.std(TSALL[:,1: T+1,8], axis = 0)*np.std(TSALL[:,1: T+1,9], axis = 0) )  # acmcq_session_hours
+        moments_out[:,27] = cov[1:T+1,5,4]/(np.std(TSALL[:,1: T+1,5], axis = 0)*np.std(TSALL[:,1: T+1,4], axis = 0) )  # acsaq_session_hours
+        moments_out[:,28] = cov[1:T+1,23,22]/(np.std(TSALL[:,1: T+1,23], axis = 0)*np.std(TSALL[:,1: T+1,22], axis = 0) )  # acmcq_Cshare_nonrev
+        moments_out[:,29] = cov[1:T+1,29,28]/(np.std(TSALL[:,1: T+1,29], axis = 0)*np.std(TSALL[:,1: T+1,28], axis = 0) )  # acmcq_Cattempt_nonrev 
 
-        # Covarainces 
-        moments_out[:,29] = cov[1:T+1,9,5] # cmcsaq_session_hours
-        moments_out[:,30] = cov[1:T+1,5,11] # cgsaq_session_hours
-        moments_out[:,31] = cov[1:T+1,9,11] # cgmcq_session_hours
-        moments_out[:,32] = cov[1:T+1,7,5] # cesaq_session_hours
-        moments_out[:,33] = cov[1:T+1,7,9] # cemcq_session_hours
-        moments_out[:,34] = cov[1:T+1,7,11] # ceg_session_hours
+        # Correlations 
+        moments_out[:,30] = cov[1:T+1,9,5]/(np.std(TSALL[:,1: T+1,9], axis = 0)*np.std(TSALL[:,1: T+1,5], axis = 0) ) # cmcsaq_session_hours
+        moments_out[:,31] = cov[1:T+1,5,11]/(np.std(TSALL[:,1: T+1,5], axis = 0)*np.std(TSALL[:,1: T+1,11], axis = 0) ) # cgsaq_session_hours
+        moments_out[:,32] = cov[1:T+1,9,11]/(np.std(TSALL[:,1: T+1,9], axis = 0)*np.std(TSALL[:,1: T+1,11], axis = 0) ) # cgmcq_session_hours
+        moments_out[:,33] = cov[1:T+1,7,5]/(np.std(TSALL[:,1: T+1,7], axis = 0)*np.std(TSALL[:,1: T+1,5], axis = 0) ) # cesaq_session_hours
+        moments_out[:,34] = cov[1:T+1,7,9]/(np.std(TSALL[:,1: T+1,7], axis = 0)*np.std(TSALL[:,1: T+1,9], axis = 0) )# cemcq_session_hours
+        moments_out[:,35] = cov[1:T+1,7,11]/(np.std(TSALL[:,1: T+1,7], axis = 0)*np.std(TSALL[:,1: T+1,11], axis = 0)) # ceg_session_hours
 
         # Atar 
-        moments_out[:,35] = cov[1:T+1,27,24] # c_atar_ii 
+        if np.sum(np.std(TSALL[:,1: T+1,24], axis = 0))>0:
+            moments_out[:,36] = cov[1:T+1,27,24]/(np.std(TSALL[:,1: T+1,27], axis = 0)*np.std(TSALL[:,1: T+1,24], axis = 0))  # c_atar_ii 
 
         # Now we take moments for 11 weeks including study week 
         return moments_out[0:T-1,:]
@@ -412,5 +433,9 @@ def generate_study_pols(og):
     S_pol_all, VF_prime = edu_iterate()
     TS_all = TSALL(S_pol_all)
     moments_out = gen_moments(TS_all)
+    del S_pol_all
+    del VF_prime
+    del TS_all
+    gc.collect()
 
     return moments_out
