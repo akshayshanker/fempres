@@ -57,7 +57,7 @@ def plot_results(moments_sim_all,
 		handles, labels = ax[7].get_legend_handles_labels()
 		fig.legend(handles, labels, loc='upper center', ncol=2)
 		fig.tight_layout()
-		fig.savefig("plot_test/{}.png".format(name +'_'+group_id), transparent=True)
+		fig.savefig("plot_test/{}.png".format(name +'_'+ group_id), transparent=True)
 
 	return 
 
@@ -249,11 +249,11 @@ if __name__ == "__main__":
 	world = MPI4py.COMM_WORLD
 
 	# Name of the model that is estimated
-	estimation_name = 'test_jan16'
+	estimation_name = 'test_CES2'
 	
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
-	scr_path = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
+	scr_path = '/scratch/pv33/edu_model_temp/' + estimation_name
 	Path(scr_path).mkdir(parents=True, exist_ok=True)
 
 	# Load the data and sort and map the moments 
@@ -262,7 +262,8 @@ if __name__ == "__main__":
 	moments_data_mapped = edumodel.map_moments(moments_data)
 
 	# Assign model tau group according to each processor according to its rank
-	model_name = list(moments_data_mapped.keys())[world.rank]
+	#model_name = list(moments_data_mapped.keys())[world.rank]
+	model_name = 'tau_01'
 
 	# Load generic model settings 
 	with open("{}settings.yml".format(settings_folder), "r") as stream:
@@ -276,11 +277,26 @@ if __name__ == "__main__":
 	# To run the model with the latest estimated moments, set the covariance
 	# of the paramter distribution to zero so the mean is drawn 
 
-	#param_cov = np.zeros(np.shape(sampmom[1]))
+	param_cov = np.zeros(np.shape(sampmom[1]))
 	param_means = sampmom[0]
 	#param_cov = sampmom[1]
-	param_cov = sampmom[1]
-	
+	#param_cov = np.zeros(np.shape(sampmom[1]))
+
+	#param_means[0] = .9 #beta
+	#param_means[2] = .1 #sigma_beta
+	#param_means[3] = .1 #delta
+	#param_means[8] = 4 #alpha
+	#param_means[15] = .2 #d
+	#param_means[-1] = .5 #A
+	#param_means[-2] = .1 #varphi_sim
+	#param_means[14] = .2 #gamma
+	#param_means[13] = 1.2 #sigma_M
+
+	#param_means[10] = .01 # gamma_sa
+	#param_means[11] = .3 # gamma_eb
+	#param_means[12] = .3 # gamma_mcq
+	#param_means[6] = 2 # zeta_hstar
+
 	# Blocked out code to adjust previous estimate values and number of params
 	#param_means = np.append(param_means,.4)
 	#param_cov = np.append(param_cov, [np.ones(len(param_means)-1)], 0)
@@ -308,8 +324,8 @@ if __name__ == "__main__":
 																row['UB']])
 
 	# Run the model and generate the moments on each processor
-	edu_model = edumodel.EduModelParams('test',
-							edu_config[model_name],
+	edu_model = edumodel.EduModelParams('tau_01',
+							edu_config['tau_01'],
 							U,
 							U_z,
 							random_draw = True,
@@ -356,7 +372,7 @@ if __name__ == "__main__":
 		list_moments = ['av_final',\
 						'av_mark',\
 						'av_markw13_exp1',\
-						'av_markw13_exp2',\
+						'Exam knowledge stock',\
 						'av_game_session_hours_cumul',\
 						'av_ebook_session_hours_cumul',\
 						'av_mcq_session_hours_cumul',\
@@ -368,7 +384,7 @@ if __name__ == "__main__":
 						'sd_final',\
 						'sd_mark',\
 						'sd_markw13_exp1',\
-						'sd_markw13_exp2',\
+						'Coursework grade',\
 						'sd_game_session_hours_cumul',\
 						'sd_ebook_session_hours_cumul',\
 						'sd_mcq_session_hours_cumul',\
@@ -406,13 +422,8 @@ if __name__ == "__main__":
 				    'gamma_1',
 				    'gamma_2',
 				    'gamma_3',
-				    'gamma_4',
-				    'gamma_11',
-				    'gamma_12',
-				    'gamma_13',
-				    'gamma_23',
-				    'gamma_22',
-				    'gamma_33',
+				    'sigma_M',
+				    'gamma_M',
 				    'd',
 				    'varphi',
 				    'varphi_sim']
@@ -425,16 +436,11 @@ if __name__ == "__main__":
 			    'sigma_beta',
 			    'delta',
 			    'gamma_3',
-			    'gamma_4',
 			    'gamma_1',
 			    'gamma_2',
-			    'gamma_13',
-			    'gamma_12',
+			    'gamma_M',
+			    'sigma_M',
 			    #Gamma symbols below do not match table
-			    'gamma_22',
-			    'gamma_23',
-			    'gamma_33',
-			    'gamma_11',
 			    'zeta_star',
 			    'sigma_zeta',
 			    'zeta_hstar',
@@ -455,15 +461,10 @@ if __name__ == "__main__":
 			"Hyperbolic discount factor",
 			#"Study effectiveness for knowledge creation",
 			"\hspace{0.4cm}Time solving MCQs",
-			"\hspace{0.4cm}Time earning happiness units",
 			"\hspace{0.4cm}Time answering SAQs",
 			"\hspace{0.4cm}Time studying the textbook",
-			"\hspace{0.4cm}Time solving MCQs \& earning happiness",
-			"\hspace{0.4cm}Time solving MCQs \& SAQ",
-			"\hspace{0.4cm}Time solving MCQs \& studying textbook",
-			"\hspace{0.4cm}Time earning happiness \& solving SAQs",
-			"\hspace{0.4cm}Time earning happiness \& studying textbook",
-			"\hspace{0.4cm}Time solving SAQs \& studying textbook",
+			"\hspace{0.4cm}Overall study hours elasticity",
+			"\hspace{0.4cm}Study elasticity of substitution",
 			#"Final exam ability",
 			"\hspace{0.4cm}Real exam ability mean",
 			"\hspace{0.4cm}Real exam ability std. deviation",
@@ -486,12 +487,8 @@ if __name__ == "__main__":
 			r"$\gamma^{sim}$",
 			r"$\gamma^{saq}$",
 			r"$\gamma^{book}$",
-			r"$\gamma^{mcq\&sim}$",
-			r"$\gamma^{mcq\&saq}$",
-			r"$\gamma^{mcq\&book}$",
-			r"$\gamma^{sim\&saq}$",
-			r"$\gamma^{sim\&book}$",
-			r"$\gamma^{saq\&book}$",
+			r"$\gamma_M$",
+			r"$\sigma_M$",
 			r"$\xi$",
 			r"$\sigma_{\varepsilon^\xi}$",
 			r"$\xi^*$",
