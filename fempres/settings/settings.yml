@@ -107,7 +107,6 @@ baseline_lite:
     gamma_M: .7
     A: 1
 
-
   theta:
     - 0
     - 0.7171656
@@ -320,7 +319,7 @@ tau_01:
         gamma_3: 0.3
         gamma_4: 0.2
         b: 0.0000066
-        a: 0.0075
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4

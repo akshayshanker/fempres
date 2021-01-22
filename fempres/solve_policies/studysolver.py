@@ -150,7 +150,7 @@ def edu_solver_factory(og,verbose=False):
             v_prime_val = eval_linear(MM,VF_prime_ind,points)
 
             if t== T-1:
-                beta = 1
+                delta = 1
 
             return period_utl + beta*delta*v_prime_val
 
@@ -204,10 +204,9 @@ def edu_solver_factory(og,verbose=False):
                     mh_prime = mh + IMh
                     points_star = np.array([m_prime, mh_prime])
                     if t== T-1:
-                        beta = 1
-
+                        delta = 1
                     # Calculate time t continuation value 
-                    VF_new[i,j,k] = sols.fun + delta*(1-beta)*eval_linear(MM,VF_prime_ind,points_star)
+                    VF_new[i,j,k] = sols.fun + beta*(1-delta)*eval_linear(MM,VF_prime_ind,points_star)
 
         return VF_new,S_pol
 

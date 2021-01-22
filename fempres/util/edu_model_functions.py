@@ -191,9 +191,9 @@ def edumodel_function_factory(params, theta,share_saq,\
 		S_hap = max(1e-10,S_hap)
 
 		if t < 4:
-			S_hap = .01
+			S_hap = .1
 		if t == 0:
-			S_saq = .01
+			S_saq = .1
 
 		# Calculate the translog
 		#lnIM = np.log(phi)  + gamma_1*np.log(S_saq) \
