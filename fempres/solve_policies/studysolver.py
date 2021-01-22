@@ -287,9 +287,9 @@ def edu_solver_factory(og,verbose=False):
 
             # Set sim and SAQ to zero when activity was not avail.
             if t < 5:
-                S_hap = .2
+                S_hap = 0
             if t == 1:
-                S_saq = .2
+                S_saq = 0
             
             # Calculate total study ours and examy
             S_total = S_saq + S_eb + S_mcq + S_hap
