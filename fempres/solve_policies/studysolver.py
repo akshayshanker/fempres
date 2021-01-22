@@ -44,9 +44,7 @@ def edu_solver_factory(og,verbose=False):
     rho_E = og.rho_E
     delta = og.delta 
     d = og.d
-    kappa_1 = og.kappa_1
-    kappa_2 = og.kappa_2
-    kappa_3 = og.kappa_3
+
 
     # Unpack uniform shocks for sim.
     U = og.U # beta and es shocks
@@ -142,8 +140,7 @@ def edu_solver_factory(og,verbose=False):
             if mh< 100:
                 IMh_util = IMh
 
-            period_utl = u_l(S_total + kappa_1*S_vec[0]\
-                             + kappa_2*S_vec[1] + kappa_3*S_vec[3], IMh_util)
+            period_utl = u_l(S_total, IMh_util)
 
             # Evaluate continuation value 
             points = np.array([m_prime,mh_prime])
@@ -322,10 +319,10 @@ def edu_solver_factory(og,verbose=False):
             TS_all[t,21] = TS_all[t-1,21] + S_hap_hat # t  S_hap_hat cum
 
             TS_all[t,22] = TS_all[t-1, 23]
-            TS_all[t,23] = min(max(correct_mcq_rate(m,t), .65), .71)/t + TS_all[t-1,23]*(t-1)/t # Check this calculation 
+            TS_all[t,23] = 0 # Check this calculation 
 
             TS_all[t,28] = TS_all[t-1, 29]  # t-1 mcq_Cattempt_nonrev 
-            TS_all[t,29] = TS_all[t-1, 29] + min(max(correct_mcq_rate(m,t), .65), .71)*S_mcq_hat # t mcq_Cattempt_nonrev 
+            TS_all[t,29] = TS_all[t-1, 29] + 0 # t mcq_Cattempt_nonrev 
 
             beta_ind_new = np.arange(len(beta_hat))\
                 [np.searchsorted(np.cumsum(P_beta[beta_ind]), U[i,t,0])]

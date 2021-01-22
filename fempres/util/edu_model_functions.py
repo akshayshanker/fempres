@@ -39,6 +39,11 @@ def edumodel_function_factory(params, theta,share_saq,\
 	gamma_5 = params['gamma_5']
 
 
+	kappa_1 = params['kappa_1']
+	kappa_2 = params['kappa_2']
+	kappa_3 = params['kappa_3']
+	kappa_4 = params['kappa_4']
+
 	#gamma_3 = params['gamma_3']
 
 	A = 1
@@ -72,6 +77,10 @@ def edumodel_function_factory(params, theta,share_saq,\
 	s_share_eb = np.array(share_eb)
 	s_share_mcq = np.array(share_mcq)
 	s_share_hap = np.array(share_hap)
+
+	#theta
+	theta = np.array(theta)
+
 
 
 	@njit
@@ -123,8 +132,8 @@ def edumodel_function_factory(params, theta,share_saq,\
 		return ((1-np.exp(-varphi*(m)/((t+1)**2))))
 
 	@njit 
-	def hours_to_hap(m):
-		return (1-np.exp(-varphi_sim*(m)))/varphi_sim
+	def effort_cost(m, kappa):
+		return 1/((1-np.exp(-kappa*(m)))/kappa)
 
 	@njit
 	def CES(S_saq, S_eb, S_mcq,S_hap, sigma):
@@ -195,54 +204,31 @@ def edumodel_function_factory(params, theta,share_saq,\
 		if t == 0:
 			S_saq = .01
 
-		# Calculate the translog
-		#lnIM = np.log(phi)  + gamma_1*np.log(S_saq) \
-		#					+ gamma_2*np.log(S_eb)\
-		#					+ gamma_3*np.log(S_mcq)\
-		#					+ gamma_4*np.log(S_hap)\
-		#					+ gamma_11*np.log(S_saq)*np.log(S_saq)\
-		#					+ gamma_12*np.log(S_saq)*np.log(S_eb)\
-		#					+ gamma_13*np.log(S_saq)*np.log(S_mcq)\
-		#					+ gamma_14*np.log(S_saq)*np.log(S_hap)\
-		#					+ gamma_23*np.log(S_eb)*np.log( S_mcq)\
-		#					+ gamma_24*np.log(S_eb)*np.log(S_hap)\
-		#					+ gamma_34*np.log(S_mcq)*np.log(S_hap)\
-		#					+ gamma_22*np.log(S_eb)*np.log(S_eb)\
-		#					+ gamma_33*np.log(S_mcq)*np.log(S_mcq)\
-		#					+ gamma_44*np.log(S_hap)*np.log(S_hap)
+
+		if s_share_mcq[t]>0:
+			S_mcq_hat = S_mcq/(effort_cost(m, kappa_3)*s_share_mcq[t])
+		else:
+			S_mcq_hat = 1e-10
+
+		S_eb_hat = 	S_eb/effort_cost(m, kappa_2)
+
+		if s_share_hap[t]>0:
+			S_hap_hat =  S_hap/(effort_cost(m, kappa_4)*s_share_hap[t])
+		else:
+			S_hap_hat = 1e-10
+
+		if s_share_saq[t]>0:
+			S_saq_hat = S_saq/(effort_cost(m, kappa_1)*s_share_saq[t])
+		else:
+			S_saq_hat = 1e-10
 		
-		# Knowledge creation is augmented by previous knowledge 
-		SAQIN = CES_2(S_saq, m, sigma_SAQ)
+		SAQIN = CES_2(S_saq_hat*np.mean(s_share_saq), m, sigma_SAQ)
 
-		IM = es*phi*CES(SAQIN,S_eb,S_mcq,S_hap, sigma_M)
+		IM = es*phi*CES(SAQIN,S_eb_hat,S_mcq_hat*np.mean(s_share_mcq), S_hap_hat*np.mean(s_share_hap),sigma_M)
 
-		#IM = (((S_saq**gamma_1)*(S_eb**gamma_2)*(S_mcq**gamma_3)*(S_hap**gamma_4))**gamma_5)
-		# Observable study outputs
-
-		if s_share_mcq[t] > 0:
-			S_mcq_hat = (S_mcq/s_share_mcq[t])*hours_to_hap(m)
-
-		else:
-			S_mcq_hat  = 0
-
-		if s_share_hap[t] >0:
-		  	S_hap_hat =  (S_hap/s_share_hap[t])*hours_to_hap(m)
-		  	
-		else:
-		 	S_hap_hat = 0
-
-		if s_share_eb[t]> 0:
-			S_eb_hat = 	(S_eb/s_share_eb[t])*hours_to_hap(m)
-		else: 
-			S_eb_hat =0
-
-		if s_share_saq[t]> 0:
-			S_saq_hat = (S_saq/s_share_saq[t])*hours_to_hap(m)
-		else:
-			S_saq_hat = 0
 
 		# Rate of current MCQ answers 
-		rate_of_correct = max(min(correct_mcq_rate(m,t), .65), .71)
+		rate_of_correct = theta[t]
 
 		# Calculate coursework grade points generated 
 		IMh = max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\

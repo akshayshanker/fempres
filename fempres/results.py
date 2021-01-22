@@ -283,10 +283,10 @@ if __name__ == "__main__":
 	param_cov = np.zeros(np.shape(sampmom[1]))
 
 	
-	#param_means[6] = 3.5 #beta_star
-	#param_means[7] = 2
-	#param_means[2] = 1.6 #sigma_beta
-	#param_means[3] = .4 #delta
+	#param_means[19] = 1#beta_star
+	#param_means[20] = 1
+	#param_means[21] = .2 #sigma_beta
+	#param_means[22] = .2 #delta
 	#param_means[10] = .13 #alpha
 	#param_means[17] = .4 #Sigma_M
 	#param_means[13] =  .07 #Gamma 2(eb)

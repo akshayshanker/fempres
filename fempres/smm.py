@@ -347,7 +347,7 @@ if __name__ == "__main__":
 	d = 3
 	estimation_name = 'test_CES3'
 	world = MPI4py.COMM_WORLD
-	number_tau_groups = 0
+	number_tau_groups = 1
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -401,7 +401,7 @@ if __name__ == "__main__":
 	start = time.time()
 
 	# Initialize the SMM error grid
-	t = 1
+	t = 0
 	if t == 0:
 		load_saved = False
 	else:
