@@ -36,7 +36,9 @@ import edumodel
 from solve_policies.studysolver import generate_study_pols
 
 def gen_RMS(edu_model,\
-			moments_data):
+			moments_data, \
+			moment_weights,\
+			use_weights = False):
 	
 	"""
 	Simulate model for a given param vector and generate error  
@@ -56,19 +58,36 @@ def gen_RMS(edu_model,\
 	"""
 	moments_sim = generate_study_pols(edu_model.og)
 
-
 	moments_sim_array = np.array(np.ravel(moments_sim))
 	moments_data_array = np.array(np.ravel(moments_data))
+
+
 
 	deviation = (moments_sim_array\
 				[~np.isnan(moments_data_array)]\
 				  - moments_data_array\
-				  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
+				  [~np.isnan(moments_data_array)])
+	#/moments_data_array[~np.isnan(moments_data_array)]
 	
-	norm = 1
+	norm  = np.sum(np.square(moments_data_array[~np.isnan(moments_data_array)]))
+
+	
 	N_err = len(deviation)
 
-	return 1-np.sqrt((1/N_err)*np.sum(np.square(deviation))/norm)
+	RMSE = 1-np.sqrt((1/N_err)*np.sum(np.square(deviation))/norm)
+
+	deviation_r = (moments_sim_array\
+				[~np.isnan(moments_data_array)]\
+				  - moments_data_array\
+				  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
+	
+	if use_weights == False:
+		RRMSE = 1-np.sqrt((1/N_err)*np.sum(np.square(deviation_r))/1)
+
+	else:
+		RRMSE = 1- np.dot(np.dot(deviation_r.T,moment_weights), deviation_r)/N_err
+
+	return RRMSE, deviation_r
 
 
 def load_tm1_iter(est_name, model_name, load_saved = True):
@@ -77,7 +96,6 @@ def load_tm1_iter(est_name, model_name, load_saved = True):
 	""" 
 
 	S_star,gamma_XEM	= np.full(d+1,0), np.full(d+1,0)
-	t = 0
 	if load_saved == True:
 		sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format(est_name + '/'+ model_name),"rb"))
 
@@ -89,6 +107,7 @@ def load_tm1_iter(est_name, model_name, load_saved = True):
 def iter_SMM(config, 			 # configuration settings for the model name 
 			 model_name, 		 # name of model (tau group name)
 			 U, U_z, 
+			 moment_weights,
 			 param_random_bounds, # bounds for parameter draws
 			 sampmom, 	    # t-1 parameter means 
 			 moments_data,  # data moments 
@@ -128,8 +147,11 @@ def iter_SMM(config, 			 # configuration settings for the model name
 	if tau_world.rank == 0:
 		print("Random Parameters drawn, distributng iteration {} \
 					for tau_group {}".format(t,model_name))
-		
-	RMS =  gen_RMS(edu_model, moments_data)
+	if t==0:
+		use_weights= False
+	else:
+		use_weights= False
+	RMS,deviation_r =  gen_RMS(edu_model, moments_data,moment_weights, use_weights = use_weights)
 
 	errors_ind = [edu_model.param_id, np.float64(RMS)]
 
@@ -140,12 +162,17 @@ def iter_SMM(config, 			 # configuration settings for the model name
 
 	parameter_list = tau_world.gather(parameters, root = 0)
 
+	moments_list = tau_world.gather(deviation_r, root = 0)
+
 	# tau_world master does selection of elite parameters and drawing new means 
 	if tau_world.rank == 0:
 		indexed_errors = \
 			np.array([item for item in indexed_errors if item[0]!='none'])
 		parameter_list\
 			 = [item for item in parameter_list if item is not None]
+
+		moment_errors\
+			= np.array([item for item in moments_list if item is not None])
  
 		parameter_list_dict = dict([(param['param_id'], param)\
 							 for param in parameter_list])
@@ -155,6 +182,7 @@ def iter_SMM(config, 			 # configuration settings for the model name
 
 		error_indices_sorted = np.take(indexed_errors[:,0],\
 									 np.argsort(-errors_arr))
+
 		errors_arr_sorted = np.take(errors_arr, np.argsort(-errors_arr))
 
 		number_N = len(error_indices_sorted)
@@ -162,6 +190,12 @@ def iter_SMM(config, 			 # configuration settings for the model name
 		elite_errors = errors_arr_sorted[0: N_elite]
 		elite_indices = error_indices_sorted[0: N_elite]
 
+		
+		# now get the elite moment_errors 
+		#moment_errors_elite = moment_errors[np.where(errors_arr==elite_errors[0])]
+
+		#moment_weights_out = np.linalg.pinv(np.dot(moment_errors_elite.T, moment_errors_elite))/T
+		moment_weights_out = 0 
 		weights = np.exp((elite_errors - np.min(elite_errors))\
 						/ (np.max(elite_errors)\
 							- np.min(elite_errors)))
@@ -181,7 +215,7 @@ def iter_SMM(config, 			 # configuration settings for the model name
 		print("...time elapsed: {} minutes".format((time.time()-start)/60))
 
 		return number_N, [means, cov], gamma_XEM, S_star, error_gamma,\
-											 error_S, elite_indices[0]
+											 error_S, elite_indices[0], moment_weights_out
 	else:
 		return 1 
 
@@ -219,8 +253,8 @@ def gen_param_moments(parameter_list_dict,\
 		sample_params.append(rand_params_i)
 
 	sample_params = np.array(sample_params)
-	means = np.average(sample_params, axis = 0)
-	cov = np.cov(sample_params, rowvar = 0)
+	means = np.average(sample_params, axis = 0, weights = weights)
+	cov = np.cov(sample_params, rowvar = 0, aweights = weights)
 
 	return means, cov
 
@@ -311,9 +345,9 @@ if __name__ == "__main__":
 	tol = 1E-14
 	N_elite = 60
 	d = 3
-	estimation_name = 'test_jan16'
+	estimation_name = 'test_CES3'
 	world = MPI4py.COMM_WORLD
-	number_tau_groups = 2
+	number_tau_groups = 0
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -331,12 +365,13 @@ if __name__ == "__main__":
 	tau_world_rank = tau_world.Get_rank()
 
 	# Load the data and sort and map the moments 
-	moments_data = pd.read_csv('{}moments_clean.csv'\
+	moments_data = pd.read_csv('{}moments_clean_av.csv'\
 					.format(settings_folder))
 	moments_data_mapped = map_moments(moments_data)
 
 	# Assign model tau group according to each core according to processor color
-	model_name = list(moments_data_mapped.keys())[color_layer_1]
+	#model_name = list(moments_data_mapped.keys())[color_layer_1]
+	model_name = 'tau_01'
 	Path(scr_path + '/' + model_name).mkdir(parents=True, exist_ok=True)
 
 	# Load model settings 
@@ -350,9 +385,9 @@ if __name__ == "__main__":
 			param_random_bounds[row['parameter']] = np.float64([row['LB'],
 																row['UB']])
 	
+	# The error vectors for the estimation 
 	U = np.load(scr_path+'/'+ 'U.npy')
 	U_z = np.load(scr_path+'/'+ 'U_z.npy')
-
 
 	tau_world.Barrier()	
 
@@ -366,16 +401,22 @@ if __name__ == "__main__":
 	start = time.time()
 
 	# Initialize the SMM error grid
-	gamma_XEM, S_star,t, sampmom = load_tm1_iter(estimation_name,model_name)
-	error = 1 
 	t = 1
+	if t == 0:
+		load_saved = False
+	else:
+		load_saved = True
+	gamma_XEM, S_star,t, sampmom = load_tm1_iter(estimation_name,model_name, load_saved= load_saved)
+	error = 1 
 	#sampmom = [0,0]
 	
+	moment_weights = 0
 	# Iterate on the SMM
 	while error > tol:
 		iter_return = iter_SMM(edu_config[model_name],
 								 model_name,
 								 U, U_z, 
+								 moment_weights,
 								 param_random_bounds,
 								 sampmom,
 								 moments_data_mapped[model_name]['data_moments'],
@@ -386,7 +427,7 @@ if __name__ == "__main__":
 
 		if tau_world.rank == 0:
 			#print(sampmom[0])
-			number_N, sampmom, gamma_XEM, S_star, error_gamma, error_S, top_ID = iter_return
+			number_N, sampmom, gamma_XEM, S_star, error_gamma, error_S, top_ID, moment_weights = iter_return
 			error_cov = np.abs(np.max(sampmom[1]))
 
 			
@@ -417,6 +458,7 @@ if __name__ == "__main__":
 		t = t+1
 		tau_world.Barrier()
 		sampmom = tau_world.bcast(sampmom, root = 0)
+		moment_weights = tau_world.bcast(moment_weights, root = 0)
 		gamma_XEM = tau_world.bcast(gamma_XEM, root = 0) 
 		S_star = tau_world.bcast(S_star, root = 0)
 		gc.collect()

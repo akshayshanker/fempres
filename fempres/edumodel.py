@@ -97,6 +97,45 @@ class EduModel:
         self.P_zetah = self.zetah_mc.P
         self.zetah_stat = self.zetah_mc.stationary_distributions[0]
 
+
+        # Study ability shock (log-normally distributed)
+        # means and sd and rho is for the log(e_s) process 
+
+        self.es_mc = tauchen(self.rho_es,
+                                   self.sigma_es,
+                                   b = self.es_star,
+                                   n = self.grid_size_es)
+        self.es_hat = np.exp(self.es_mc.state_values)/np.dot(np.exp(self.es_mc.state_values), self.es_mc.stationary_distributions[0])
+        self.P_es = self.es_mc.P
+        self.es_stat = self.es_mc.stationary_distributions[0]
+
+
+        # Combine all shock values into cartesian product 
+
+        #self.Q_shocks = cartesian([self.beta_hat,self.es_hat])
+        self.Q_shocks_ind = cartesian([np.arange(len(self.beta_hat)),np.arange(len(self.es_hat))])
+
+        # Build joint beta and es shock transition matrix
+        # EBA_P[i,j, :] gives joint PMF of beta and es_hat for t+1 for beta_ind = j and es_ind = i at t
+
+        self.EBA_P = np.zeros((len(self.beta_hat), len(self.es_hat), int(len(self.beta_hat)*len(self.es_hat))))
+
+        sizeEBA =   int(len(self.beta_hat)*
+                                len(self.es_hat))
+
+        #self.EBA_P2 = self.EBA_P.reshape((sizeEBA, sizeEBA))
+
+
+        for j in self.Q_shocks_ind:
+
+            EBA_P_temp = cartesian([self.P_beta[j[0]],
+                                    self.P_es[j[1]]])
+
+            self.EBA_P[j[0], j[1], :]\
+                = EBA_P_temp[:, 0]*EBA_P_temp[:, 1]
+
+        self.EBA_P2 = self.EBA_P.reshape((sizeEBA, sizeEBA))
+
         # Generate final period T expected continuation value
 
         VF_UC = np.zeros((len(self.zeta_hhat)*len(self.M)*len(self.Mh)))
@@ -267,6 +306,7 @@ if __name__ == "__main__":
     settings = 'settings/'
     # Name of model
     model_name = 'tau30'
+    estimation_name = 'test_CES2'
     # Path for scratch folder (will contain latest estimated means)
     scr_path = "/scratch/pv33/edu_model_temp/"
 
@@ -282,16 +322,17 @@ if __name__ == "__main__":
 
     sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format('test/tau_00'),"rb"))
 
-    # Generate random points for beta
+    # Generate random points for beta and es
     U = np.random.rand(edu_config['baseline_lite']['parameters']['N'],\
-                        edu_config['baseline_lite']['parameters']['T'])
+                        edu_config['baseline_lite']['parameters']['T'],2)
 
     # Generate random points for ability and percieved ability 
     U_z = np.random.rand(edu_config['baseline_lite']['parameters']['N'],2)
 
-    sampmom[0][9] =.001
-    sampmom[0][8] =.0000001
-    sampmom[1][9,9] = 0
+
+    scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
+    #np.save(scr_path2+'/'+ 'U.npy',U)
+    #np.save(scr_path2+'/'+ 'U_z.npy',U_z)
 
     moments_data = pd.read_csv('{}moments_clean.csv'\
                     .format(settings))
@@ -302,12 +343,12 @@ if __name__ == "__main__":
                                 edu_config['tau_30'],
                                 U,
                                 U_z,
-                                random_draw = True,
-                                uniform = True,
+                                random_draw = False,
+                                uniform = False,
                                 param_random_means = sampmom[0], 
                                 param_random_cov = np.zeros(np.shape(sampmom[1])), 
                                 random_bounds = param_random_bounds)
 
-    moments_sim = generate_study_pols(edu_model.og)
+    #moments_sim = generate_study_pols(edu_model.og)
 
 

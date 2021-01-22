@@ -19,9 +19,9 @@ baseline_lite:
     es_star: 'General study ability mean'
     rho_es: 'General study ability persistence'
     sigma_es: 'General study ability SD'
-    ec_star: 'CW study ability mean'
-    rho_ec: 'CW study ability persistence'
-    sigma_ec: 'CW study ability SD'
+    es_star: 'CW study ability mean'
+    rho_es: 'CW study ability persistence'
+    sigma_es: 'CW study ability SD'
     zeta_star: 'Final exam ability mean'
     sigma_zeta: 'CW study ability SD'
     zeta_hstar: 'Perceived final exam ability mean'
@@ -56,7 +56,7 @@ baseline_lite:
   parameters:
 
     N: 1000
-    M_max: 350
+    M_max: 150
     M_min: .01
     Mh_max: 100
     Mh_min: .0001
@@ -66,15 +66,19 @@ baseline_lite:
     beta_star: .99
     rho_beta: .5
     sigma_beta: .00002
+    sigma_es: 1
+    es_star: 0
+    rho_es: .8
     delta: .6
     zeta_star: .011
     sigma_zeta: .2
     zeta_hstar: .5
     sigma_hzeta: .01
-    grid_size_M: 100
+    grid_size_M: 30
     grid_size_Mh: 30
-    grid_size_beta: 5
+    grid_size_beta: 3
     grid_size_zeta: 50
+    grid_size_es: 1
     iota_i: -50
     iota_c: 100
     alpha: .4
@@ -83,17 +87,26 @@ baseline_lite:
     gamma_1: 0.25
     gamma_2: 0.25
     gamma_3: 0.2
+    gamma_5: 0.2
     gamma_13: 0
     gamma_12: 0
     gamma_23: 0
     gamma_11: 0
     gamma_22: 0
     gamma_33: 0
-    a: 0.066
-    b: .005
+    kappa_1: .3
+    kappa_2: .2
+    kappa_3: .2
+    b: 0.0000066
+    a: 0.005
     d: .01
     varphi: 1
     varphi_sim: .4
+    sigma_M: .5
+    sigma_SAQ: .5
+    gamma_M: .7
+    A: 1
+
 
   theta:
     - 0
@@ -158,7 +171,7 @@ baseline_lite:
 tau_00:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -168,15 +181,19 @@ tau_00:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -186,6 +203,7 @@ tau_00:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -195,11 +213,16 @@ tau_00:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        kappa_1: .3
+        kappa_2: .2
+        kappa_3: .2
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: 1
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -264,48 +287,47 @@ tau_00:
 tau_01:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
         H: 168
         rho_E: .55
         T: 12
-        beta_star: .99
+        beta_star: .7
         rho_beta: .5
         sigma_beta: .00002
-        delta: .6
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
+        delta: .99
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
         psi_E: 1
         phi: .50
-        gamma_1: 0.25
-        gamma_2: 0.25
-        gamma_3: 0.2
+        gamma_1: 0.1
+        gamma_2: 0.3
+        gamma_3: 0.3
         gamma_4: 0.2
-        gamma_13: 0
-        gamma_12: 0
-        gamma_23: 0
-        gamma_11: 0
-        gamma_22: 0
-        gamma_24: 0
-        gamma_33: 0
-        gamma_34: 0
-        gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.0075
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: 1.5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -370,7 +392,7 @@ tau_01:
 tau_10:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -380,15 +402,19 @@ tau_10:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -398,6 +424,10 @@ tau_10:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .2
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -407,11 +437,15 @@ tau_10:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -476,7 +510,7 @@ tau_10:
 tau_11:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -486,15 +520,19 @@ tau_11:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -504,6 +542,10 @@ tau_11:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .4
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -513,11 +555,15 @@ tau_11:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        a: 0.0000066
+        b: 0.0005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -583,7 +629,7 @@ tau_11:
 tau_20:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -593,15 +639,19 @@ tau_20:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -611,6 +661,10 @@ tau_20:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .4
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -620,11 +674,15 @@ tau_20:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -689,7 +747,7 @@ tau_20:
 tau_21:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -699,15 +757,19 @@ tau_21:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -717,6 +779,10 @@ tau_21:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .4
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -726,11 +792,15 @@ tau_21:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -795,7 +865,7 @@ tau_21:
 tau_30:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -805,15 +875,19 @@ tau_30:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: .01
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -823,6 +897,10 @@ tau_30:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .4
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -832,11 +910,15 @@ tau_30:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
@@ -901,7 +983,7 @@ tau_30:
 tau_31:
     parameters:
         N: 1000
-        M_max: 350
+        M_max: 150
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -911,15 +993,19 @@ tau_31:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
+        sigma_es: 1
+        es_star: 0
+        rho_es: .8
         delta: .6
         zeta_star: .011
         sigma_zeta: .2
         zeta_hstar: .5
         sigma_hzeta: .01
-        grid_size_M: 100
+        grid_size_M: 30
         grid_size_Mh: 30
-        grid_size_beta: 5
+        grid_size_beta: 3
         grid_size_zeta: 50
+        grid_size_es: 1
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -929,6 +1015,10 @@ tau_31:
         gamma_2: 0.25
         gamma_3: 0.2
         gamma_4: 0.2
+        gamma_5: 0.2
+        kappa_3: .4
+        kappa_2: .4
+        kappa_1: .1
         gamma_13: 0
         gamma_12: 0
         gamma_23: 0
@@ -938,11 +1028,15 @@ tau_31:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        a: 0.066
-        b: 0.005
+        b: 0.0000066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
+        sigma_M: .5
+        gamma_M: .7
+        sigma_SAQ: .7
+        A: 1
 
     theta:
         - 0
