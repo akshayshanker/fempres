@@ -14,24 +14,21 @@ mpiexec -n 480 python3 -m mpi4py smm.py
 
 """
 
-# Import packages
+# Import external packages
 import yaml
 import gc
 import numpy as np
 import time
 import warnings
 warnings.filterwarnings('ignore')
-from collections import defaultdict
-from numpy import genfromtxt
 import csv
 import time
 import dill as pickle 
 import copy
 import sys
-import importlib
 import pandas as pd
 
-# Education model modules
+# Import education model modules
 import edumodel 
 from solve_policies.studysolver import generate_study_pols
 
@@ -50,19 +47,25 @@ def gen_RMS(edu_model,\
 	edu_model: EduModel object
 	moments_data: array
 				  sorted moments for group
+	moment_weights: MxM array
+					moment weighit matrix (M is number of moments)
+	use_weights : Bool
+				   True if weights used, else I matrix used 
 
 	Returns 
 	------
-	error : 
+	error : float64
+			 error of SMM objective 
 
 	"""
+	# Solve model and generate moments 
 	moments_sim = generate_study_pols(edu_model.og)
 
+	# List moments into 1-D array (note order maintained)
 	moments_sim_array = np.array(np.ravel(moments_sim))
 	moments_data_array = np.array(np.ravel(moments_data))
 
-
-
+	# Cacluate absolute deviation 
 	deviation = (moments_sim_array\
 				[~np.isnan(moments_data_array)]\
 				  - moments_data_array\
@@ -70,12 +73,12 @@ def gen_RMS(edu_model,\
 	#/moments_data_array[~np.isnan(moments_data_array)]
 	
 	norm  = np.sum(np.square(moments_data_array[~np.isnan(moments_data_array)]))
-
-	
 	N_err = len(deviation)
 
+	# RMSE of absolute deviation 
 	RMSE = 1-np.sqrt((1/N_err)*np.sum(np.square(deviation))/norm)
 
+	# Relative deviation (percentage)
 	deviation_r = (moments_sim_array\
 				[~np.isnan(moments_data_array)]\
 				  - moments_data_array\
@@ -117,9 +120,31 @@ def iter_SMM(config, 			 # configuration settings for the model name
 			 tau_world, # communicate class for groups
 			 N_elite):	# iteration number 
 	
-	""" Initializes parameters and EduModel model and peforms 
+	""" Initializes parameters and EduModel model across draws and peforms 
 		one iteration of the SMM, returning updated sampling distribution
 		for the parameters
+
+	Parameters
+	----------
+	config : Dict
+	model_name : string 
+				 group ID (RCTx gednder)
+	U : NxTx2 array
+		 array of shocks for  beta and e_s
+	U_z : Nx2 
+		  array of exam ability shocks
+	moment_weights : array
+					 weighting matrix to use
+	gamma_XEM : array
+	S_star : array
+	t : int
+	 	iteration numbner 
+	tau_world : communicator class 
+				 MPI sub-groups for RCTx gender groups 
+	N_elite : int
+				number of elite draws
+
+
 
 	'"""
 
@@ -347,7 +372,7 @@ if __name__ == "__main__":
 	d = 3
 	estimation_name = 'test_CES3'
 	world = MPI4py.COMM_WORLD
-	number_tau_groups = 0
+	number_tau_groups = 1
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'

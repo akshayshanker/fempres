@@ -305,8 +305,8 @@ if __name__ == "__main__":
     # and random param bounds
     settings = 'settings/'
     # Name of model
-    model_name = 'tau30'
-    estimation_name = 'test_CES2'
+    model_name = 'tau01'
+    estimation_name = 'test_CES3'
     # Path for scratch folder (will contain latest estimated means)
     scr_path = "/scratch/pv33/edu_model_temp/"
 
@@ -320,7 +320,7 @@ if __name__ == "__main__":
             param_random_bounds[row['parameter']] = np.float64([row['LB'],
                                                                 row['UB']])
 
-    sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format('test/tau_00'),"rb"))
+    sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format('test_CES3/tau_01'),"rb"))
 
     # Generate random points for beta and es
     U = np.random.rand(edu_config['baseline_lite']['parameters']['N'],\
@@ -331,8 +331,8 @@ if __name__ == "__main__":
 
 
     scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
-    #np.save(scr_path2+'/'+ 'U.npy',U)
-    #np.save(scr_path2+'/'+ 'U_z.npy',U_z)
+    np.save(scr_path2+'/'+ 'U.npy',U)
+    np.save(scr_path2+'/'+ 'U_z.npy',U_z)
 
     moments_data = pd.read_csv('{}moments_clean.csv'\
                     .format(settings))
@@ -340,15 +340,15 @@ if __name__ == "__main__":
     moments_grouped_sorted  = map_moments(moments_data)
 
     edu_model = EduModelParams('test',
-                                edu_config['tau_30'],
+                                edu_config['tau_01'],
                                 U,
                                 U_z,
-                                random_draw = False,
+                                random_draw = True,
                                 uniform = False,
                                 param_random_means = sampmom[0], 
                                 param_random_cov = np.zeros(np.shape(sampmom[1])), 
                                 random_bounds = param_random_bounds)
 
-    #moments_sim = generate_study_pols(edu_model.og)
+    moments_sim = generate_study_pols(edu_model.og)
 
 

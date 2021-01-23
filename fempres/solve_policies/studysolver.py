@@ -152,7 +152,7 @@ def edu_solver_factory(og,verbose=False):
             if t== T-1:
                 delta = 1
 
-            return period_utl + beta*delta*v_prime_val
+            return period_utl + delta*delta*v_prime_val
 
     @njit
     def do_bell(t,VF_prime):
@@ -205,6 +205,7 @@ def edu_solver_factory(og,verbose=False):
                     points_star = np.array([m_prime, mh_prime])
                     if t== T-1:
                         delta = 1
+
                     # Calculate time t continuation value 
                     VF_new[i,j,k] = sols.fun + beta*(1-delta)*eval_linear(MM,VF_prime_ind,points_star)
 
@@ -286,9 +287,9 @@ def edu_solver_factory(og,verbose=False):
 
             # Set sim and SAQ to zero when activity was not avail.
             if t < 5:
-                S_hap = 0
+                S_hap = .01
             if t == 1:
-                S_saq = 0
+                S_saq = .01
             
             # Calculate total study ours and examy
             S_total = S_saq + S_eb + S_mcq + S_hap
@@ -298,7 +299,7 @@ def edu_solver_factory(og,verbose=False):
 
             # Update with vals for time t
             TS_all[t,0] = TS_all[t-1, 1] # t knowledge capital 
-            TS_all[t,1] = m + IM# t+1 knowledge capital
+            TS_all[t,1] = min(M[-1], m + IM) # t+1 knowledge capital
             TS_all[t,2] = mh # t-1 coursework grade (CW grade at the beggining of t!)
             TS_all[t,3] = min(mh + IMh,100) # t+1 coursework grade (coursework grade at the end of t)
             TS_all[t,4] = TS_all[t-1,5]  # t-1  S_saq 
@@ -354,6 +355,7 @@ def edu_solver_factory(og,verbose=False):
 
     @njit 
     def TSALL(S_pol_all):
+
         TS_all = np.empty((N,T+1, 30))
 
         for i in range(N):
@@ -508,7 +510,10 @@ def generate_study_pols(og):
 
     edu_iterate,TSALL,gen_moments = edu_solver_factory(og)
     S_pol_all, VF_prime = edu_iterate()
+    #print("Running tims-series-sim")
+    time_str= time.time()
     TS_all = TSALL(S_pol_all)
+    #print("TS SIM took {} secs".format(time.time()-time_str))
     moments_out = gen_moments(TS_all)
     del S_pol_all
     del VF_prime

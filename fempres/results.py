@@ -30,7 +30,9 @@ def plot_results(moments_sim_all,
 	linestyles=["-","-"]
 	col_dict = {'data': 'black', 'sim':'gray'}
 	markers=['x', 'o']
-
+	ID = np.random.randint(0,9999)
+	plot_path = "plot_test_{}/".format(ID)
+	Path(plot_path).mkdir(parents=True, exist_ok=True)
 	# loop through each of the variables in the list
 	for i, name in zip(np.arange(len(variable_list)),variable_list):
 		# create a plot for this variable
@@ -57,7 +59,8 @@ def plot_results(moments_sim_all,
 		#handles, labels = ax.get_legend_handles_labels()
 		#fig.legend(handles, labels, loc='upper center', ncol=2)
 		#fig.tight_layout()
-		fig.savefig("plot_test/{}.png".format(name + '_Jan18'), transparent=True)
+
+		fig.savefig("plot_test_{}/{}.png".format(ID, name + '_Jan18'), transparent=True)
 
 	return 
 
@@ -249,7 +252,7 @@ if __name__ == "__main__":
 	world = MPI4py.COMM_WORLD
 
 	# Name of the model that is estimated
-	estimation_name = 'test_CES2'
+	estimation_name = 'test_CES3'
 	
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -283,16 +286,13 @@ if __name__ == "__main__":
 	param_cov = np.zeros(np.shape(sampmom[1]))
 
 	
-	#param_means[6] = 3.5 #beta_star
-	#param_means[7] = 2
-	#param_means[2] = 1.6 #sigma_beta
-	#param_means[3] = .4 #delta
-	#param_means[10] = .13 #alpha
-	#param_means[17] = .4 #Sigma_M
-	#param_means[13] =  .07 #Gamma 2(eb)
-	#param_means[14] = .34 #Gamma 3(mcq)
-	#param_means[23] = 4.7 #varphi
-	#param_means[-3] = .2 #d
+	param_means[5] = .1   #delta
+	param_means[12] = .25  #gamma_1
+	param_means[13] = .2  #gamma_2
+	param_means[14] = .1  #gamma_3
+	param_means[19] = 1.7 #kappa_1
+	param_means[10] = .05  #alpha
+
 
 	# Blocked out code to adjust previous estimate values and number of params
 	#param_means = np.append(param_means,.4)

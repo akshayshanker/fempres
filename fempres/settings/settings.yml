@@ -55,7 +55,7 @@ baseline_lite:
 
   parameters:
 
-    N: 1000
+    N: 100000
     M_max: 150
     M_min: .01
     Mh_max: 100
@@ -78,7 +78,7 @@ baseline_lite:
     grid_size_Mh: 30
     grid_size_beta: 3
     grid_size_zeta: 50
-    grid_size_es: 1
+    grid_size_es: 3
     iota_i: -50
     iota_c: 100
     alpha: .4
@@ -98,7 +98,7 @@ baseline_lite:
     kappa_2: .2
     kappa_3: .2
     b: 0.0000066
-    a: 0.005
+    a: 0.0075
     d: .01
     varphi: 1
     varphi_sim: .4
@@ -169,7 +169,7 @@ baseline_lite:
     - 0.0579719
 tau_00:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -192,7 +192,7 @@ tau_00:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -285,7 +285,7 @@ tau_00:
         - 0.0001943
 tau_01:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -308,7 +308,7 @@ tau_01:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -319,7 +319,7 @@ tau_01:
         gamma_3: 0.3
         gamma_4: 0.2
         b: 0.0000066
-        a: 0.005
+        a: 0.0085
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -390,7 +390,7 @@ tau_01:
         - 0.0001164
 tau_10:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -413,7 +413,7 @@ tau_10:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -437,7 +437,7 @@ tau_10:
         gamma_34: 0
         gamma_44: 0
         b: 0.0000066
-        a: 0.005
+        a: 0.008
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -508,7 +508,7 @@ tau_10:
         - 0.0001691
 tau_11:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -531,7 +531,7 @@ tau_11:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -627,7 +627,7 @@ tau_11:
 
 tau_20:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -650,7 +650,7 @@ tau_20:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -745,7 +745,7 @@ tau_20:
         - 0.0002619
 tau_21:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -768,7 +768,7 @@ tau_21:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -863,7 +863,7 @@ tau_21:
         - 0.0001161
 tau_30:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -874,7 +874,7 @@ tau_30:
         beta_star: .99
         rho_beta: .5
         sigma_beta: .00002
-        sigma_es: .01
+        sigma_es: 1.5
         es_star: 0
         rho_es: .8
         delta: .6
@@ -886,7 +886,7 @@ tau_30:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4
@@ -981,7 +981,7 @@ tau_30:
         - 0.0002315
 tau_31:
     parameters:
-        N: 1000
+        N: 100000
         M_max: 150
         M_min: .01
         Mh_max: 100
@@ -1004,7 +1004,7 @@ tau_31:
         grid_size_Mh: 30
         grid_size_beta: 3
         grid_size_zeta: 50
-        grid_size_es: 1
+        grid_size_es: 3
         iota_i: -50
         iota_c: 100
         alpha: .4

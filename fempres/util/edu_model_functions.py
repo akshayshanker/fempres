@@ -89,12 +89,10 @@ def edumodel_function_factory(params, theta,share_saq,\
 		"""		
 
 		# If exam grade is fail, then student gets no utility 
-		if FG< 50:
-			FC = 1e-20
+
 
 		# If pass, then receives marks
-		else: 
-			FC = rho_E*FG + (1-rho_E)*Mh_T
+		FC = rho_E*FG 
 
 		# Return utility
 		return alpha*np.log(FC)
@@ -191,9 +189,9 @@ def edumodel_function_factory(params, theta,share_saq,\
 		S_hap = max(1e-10,S_hap)
 
 		if t < 4:
-			S_hap = .1
+			S_hap = .01
 		if t == 0:
-			S_saq = .1
+			S_saq = .01
 
 		# Calculate the translog
 		#lnIM = np.log(phi)  + gamma_1*np.log(S_saq) \
@@ -223,13 +221,13 @@ def edumodel_function_factory(params, theta,share_saq,\
 			S_mcq_hat = (S_mcq/s_share_mcq[t])*hours_to_hap(m)
 
 		else:
-			S_mcq_hat  = 0
+			S_mcq_hat  = S_mcq*.1
 
 		if s_share_hap[t] >0:
 		  	S_hap_hat =  (S_hap/s_share_hap[t])*hours_to_hap(m)
 		  	
 		else:
-		 	S_hap_hat = 0
+		 	S_hap_hat = S_hap*.1
 
 		if s_share_eb[t]> 0:
 			S_eb_hat = 	(S_eb/s_share_eb[t])*hours_to_hap(m)
@@ -239,7 +237,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 		if s_share_saq[t]> 0:
 			S_saq_hat = (S_saq/s_share_saq[t])*hours_to_hap(m)
 		else:
-			S_saq_hat = 0
+			S_saq_hat = S_saq*.01
 
 		# Rate of current MCQ answers 
 		rate_of_correct = max(min(correct_mcq_rate(m,t), .65), .71)
@@ -259,6 +257,6 @@ def edumodel_function_factory(params, theta,share_saq,\
 		# Ensure non-course hours do not exceed 168
 		l = max(l, 1e-200)
 
-		return np.log(l)  #+ alpha*np.log(1+(1-rho_E)*IMh) #((1-rho_E)*IMh)**alpha 
+		return np.log(l)  + alpha*np.log((1-rho_E)*(1+IMh)) #((1-rho_E)*IMh)**alpha 
 
 	return u_grade, fin_exam_grade, S_effort_to_IM, u_l, correct_mcq_rate
