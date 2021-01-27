@@ -42,7 +42,7 @@ def rand_p_generator(param_deterministic, # dictionary containing deterministic 
                 parameters[key]  = draws[i]
 
             if np.sum(draws < random_param_bounds_ar[:,0]) + np.sum(draws > random_param_bounds_ar[:,1]) == 0 and\
-                parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] < 1 and np.abs(parameters['sigma_M'] -1)>.01 :
+                parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] < 1 and np.abs(parameters['sigma_M'] -1)>.01:
                 in_range = True
                #print("in range")
             else:
@@ -54,7 +54,7 @@ def rand_p_generator(param_deterministic, # dictionary containing deterministic 
             for key in param_random_bounds:
                 parameters[key]  = np.random.uniform(param_random_bounds[key][0], param_random_bounds[key][1])
 
-            if parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] < 1 and np.abs(parameters['sigma_M'] -1)>.01 :
+            if parameters['gamma_1'] + parameters['gamma_2'] + parameters['gamma_3'] < 1 and np.abs(parameters['sigma_M'] -1)>.01:
                 #print('yes')
                 in_range = True
             #in_range = True

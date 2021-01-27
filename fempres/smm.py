@@ -83,6 +83,10 @@ def gen_RMS(edu_model,\
 				[~np.isnan(moments_data_array)]\
 				  - moments_data_array\
 				  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
+
+
+	moments_data_nonan = moments_data_array[~np.isnan(moments_data_array)]
+	deviation_r[np.where(np.abs(moments_data_nonan)<1)] = deviation[np.where(np.abs(moments_data_nonan)<1)]
 	
 	if use_weights == False:
 		RRMSE = 1-np.sqrt((1/N_err)*np.sum(np.square(deviation_r))/1)
@@ -219,7 +223,7 @@ def iter_SMM(config, 			 # configuration settings for the model name
 		# now get the elite moment_errors 
 		#moment_errors_elite = moment_errors[np.where(errors_arr==elite_errors[0])]
 
-		#moment_weights_out = np.linalg.pinv(np.dot(moment_errors_elite.T, moment_errors_elite))/T
+		#moment_weights_out = np.linalg.pinv(np.dot(moment_errors_elite.T, moment_errors_elite))/100
 		moment_weights_out = 0 
 		weights = np.exp((elite_errors - np.min(elite_errors))\
 						/ (np.max(elite_errors)\
@@ -318,7 +322,7 @@ def map_moments(moments_data):
 					'av_player_happy_deploym_cumul',\
 					'av_mcq_attempt_nonrev_cumul',\
 					'av_sa_attempt_cumul', \
-					'av_mcq_Cshare_nonrev_cumul',\
+					'av_totebook_pageviews_cumul',\
 					'sd_final',\
 					'sd_mark',\
 					'sd_markw13_exp1',\
@@ -330,12 +334,12 @@ def map_moments(moments_data):
 					'sd_player_happy_deploym_cumul',\
 					'sd_mcq_attempt_nonrev_cumul',\
 					'sd_sa_attempt_cumul', \
-					'sd_mcq_Cshare_nonrev_cumul',\
+					'sd_totebook_pageviews_cumul',\
 					'acgame_session_hours',\
 					'acebook_session_hours',\
 					'acmcq_session_hours',\
 					'acsaq_session_hours',\
-					'acmcq_Cshare_nonrev',\
+					'actotebook_pageviews',\
 					'acmcq_Cattempt_nonrev',\
 					'cmcsaq_session_hours',\
 					'cgsaq_session_hours',\
@@ -343,11 +347,23 @@ def map_moments(moments_data):
 					'cesaq_session_hours',\
 					'cemcq_session_hours',\
 					'ceg_session_hours',\
-					'c_atar_ii']
+					'co_fgame_session_hours_cumul',\
+					'co_febook_session_hours_cumul',\
+					'co_fmcq_session_hours_cumul',
+					'co_fgame_session_hours_cumul',\
+					'co_fsa_attempt_cumul',\
+					'co_ftotebook_pageviews_cumul',\
+					'co_fmcq_attempt_nonrev_cumul',\
+					'co_fsa_attempt_cumul',\
+					'co_gam',\
+					'co_eboo',\
+					'co_mc',\
+					'co_sa',\
+					'co_fatar_ii']
 
 	# For each group, create an empty array of sorted moments 
 	for keys in moments_grouped_sorted:
-		moments_grouped_sorted[keys]['data_moments'] = np.empty((11,37))
+		moments_grouped_sorted[keys]['data_moments'] = np.empty((11,49))
 
 	# Map the moments to the array with cols as they are ordered
 	# in list_moments for each group
@@ -368,11 +384,11 @@ if __name__ == "__main__":
 	
 	# Estimation parameters  
 	tol = 1E-14
-	N_elite = 60
+	N_elite = 40
 	d = 3
-	estimation_name = 'test_CES3'
+	estimation_name = 'Preliminary_all_v1'
 	world = MPI4py.COMM_WORLD
-	number_tau_groups = 1
+	number_tau_groups = 8
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -390,13 +406,13 @@ if __name__ == "__main__":
 	tau_world_rank = tau_world.Get_rank()
 
 	# Load the data and sort and map the moments 
-	moments_data = pd.read_csv('{}moments_clean_av.csv'\
+	moments_data = pd.read_csv('{}moments_clean.csv'\
 					.format(settings_folder))
 	moments_data_mapped = map_moments(moments_data)
 
 	# Assign model tau group according to each core according to processor color
-	#model_name = list(moments_data_mapped.keys())[color_layer_1]
-	model_name = 'tau_01'
+	model_name = list(moments_data_mapped.keys())[color_layer_1]
+	#model_name = 'tau_01'
 	Path(scr_path + '/' + model_name).mkdir(parents=True, exist_ok=True)
 
 	# Load model settings 

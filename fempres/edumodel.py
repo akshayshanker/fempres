@@ -38,6 +38,7 @@ class EduModel:
                  ):
         
         self.parameters = config['parameters']
+        self.theta = config['theta']
         self.config = config
         self.__dict__.update(config['parameters'])
 
@@ -179,7 +180,6 @@ def map_moments(moments_data):
     # and order them in the same order as the word doc 
     # the order of the list should be the same as in sim
     # moments mapped in gen_moments
-
     list_moments = ['av_final',\
                     'av_mark',\
                     'av_markw13_exp1',\
@@ -191,7 +191,7 @@ def map_moments(moments_data):
                     'av_player_happy_deploym_cumul',\
                     'av_mcq_attempt_nonrev_cumul',\
                     'av_sa_attempt_cumul', \
-                    'av_mcq_Cshare_nonrev_cumul',\
+                    'av_totebook_pageviews_cumul',\
                     'sd_final',\
                     'sd_mark',\
                     'sd_markw13_exp1',\
@@ -203,12 +203,12 @@ def map_moments(moments_data):
                     'sd_player_happy_deploym_cumul',\
                     'sd_mcq_attempt_nonrev_cumul',\
                     'sd_sa_attempt_cumul', \
-                    'sd_mcq_Cshare_nonrev_cumul',\
+                    'sd_totebook_pageviews_cumul',\
                     'acgame_session_hours',\
                     'acebook_session_hours',\
                     'acmcq_session_hours',\
                     'acsaq_session_hours',\
-                    'acmcq_Cshare_nonrev',\
+                    'actotebook_pageviews',\
                     'acmcq_Cattempt_nonrev',\
                     'cmcsaq_session_hours',\
                     'cgsaq_session_hours',\
@@ -216,11 +216,24 @@ def map_moments(moments_data):
                     'cesaq_session_hours',\
                     'cemcq_session_hours',\
                     'ceg_session_hours',\
-                    'c_atar_ii']
+                    'co_fgame_session_hours_cumul',\
+                    'co_febook_session_hours_cumul',\
+                    'co_fmcq_session_hours_cumul',
+                    'co_fgame_session_hours_cumul',\
+                    'co_fsa_attempt_cumul',\
+                    'co_ftotebook_pageviews_cumul',\
+                    'co_fmcq_attempt_nonrev_cumul',\
+                    'co_fsa_attempt_cumul',\
+                    'co_gam',\
+                    'co_eboo',\
+                    'co_mc',\
+                    'co_sa',\
+                    'co_fatar_ii']
+
 
     # For each group, create an empty array of sorted moments 
     for keys in moments_grouped_sorted:
-        moments_grouped_sorted[keys]['data_moments'] = np.empty((11,37))
+        moments_grouped_sorted[keys]['data_moments'] = np.empty((11,49))
 
     # Map the moments to the array with cols as they are ordered
     # in list_moments for each group
@@ -300,13 +313,14 @@ if __name__ == "__main__":
     import csv
     import pandas as pd
     from solve_policies.studysolver import generate_study_pols
+    from pathlib import Path
 
     # Folder contains settings (grid sizes and non-random params)
     # and random param bounds
     settings = 'settings/'
     # Name of model
     model_name = 'tau01'
-    estimation_name = 'test_CES3'
+    estimation_name = 'Preliminary_all_v1'
     # Path for scratch folder (will contain latest estimated means)
     scr_path = "/scratch/pv33/edu_model_temp/"
 
@@ -323,14 +337,18 @@ if __name__ == "__main__":
     sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format('test_CES3/tau_01'),"rb"))
 
     # Generate random points for beta and es
-    U = np.random.rand(edu_config['baseline_lite']['parameters']['N'],\
+    U = np.random.rand(edu_config['baseline_lite']['parameters']['S'],
+                        edu_config['baseline_lite']['parameters']['N'],\
                         edu_config['baseline_lite']['parameters']['T'],2)
 
     # Generate random points for ability and percieved ability 
-    U_z = np.random.rand(edu_config['baseline_lite']['parameters']['N'],2)
+    U_z = np.random.rand(edu_config['baseline_lite']['parameters']['S'],
+                        edu_config['baseline_lite']['parameters']['N'],2)
 
 
     scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
+    Path(scr_path2).mkdir(parents=True, exist_ok=True)
+
     np.save(scr_path2+'/'+ 'U.npy',U)
     np.save(scr_path2+'/'+ 'U_z.npy',U_z)
 
@@ -344,11 +362,11 @@ if __name__ == "__main__":
                                 U,
                                 U_z,
                                 random_draw = True,
-                                uniform = False,
+                                uniform = True,
                                 param_random_means = sampmom[0], 
                                 param_random_cov = np.zeros(np.shape(sampmom[1])), 
                                 random_bounds = param_random_bounds)
 
-    moments_sim = generate_study_pols(edu_model.og)
+    #moments_sim = generate_study_pols(edu_model.og)
 
 

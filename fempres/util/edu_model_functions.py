@@ -25,6 +25,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 	b = params['b']
 	M_max = params['M_max']
 	varphi = params['varphi']
+
 	varphi_sim = params['varphi_sim']
 
 	# Translog parameters
@@ -33,15 +34,16 @@ def edumodel_function_factory(params, theta,share_saq,\
 	gamma_3 = params['gamma_3']
 	#gamma_4 = params['gamma_4']
 	gamma_4 = 1 -gamma_1 -gamma_2 - gamma_3
-	gamma_M = params['gamma_M']
 	sigma_M = params['sigma_M']
-	sigma_SAQ = params['sigma_SAQ']
-	gamma_5 = params['gamma_5']
-
 
 	#gamma_3 = params['gamma_3']
 
 	A = 1
+
+	#kappa_1 = params['kappa_1']
+	#kappa_2 = params['kappa_2']
+	#kappa_3 = params['kappa_3']
+	#kappa_4 = params['kappa_4']
 
 	# First row of zero sum diag matrix = 0
 	#gamma_11= params['gamma_11']
@@ -72,6 +74,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 	s_share_eb = np.array(share_eb)
 	s_share_mcq = np.array(share_mcq)
 	s_share_hap = np.array(share_hap)
+	theta = np.array(theta)
 
 
 	@njit
@@ -92,7 +95,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 
 
 		# If pass, then receives marks
-		FC = rho_E*FG 
+		FC = rho_E*FG  + (1-rho_E)*Mh_T
 
 		# Return utility
 		return alpha*np.log(FC)
@@ -122,7 +125,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 
 	@njit 
 	def hours_to_hap(m):
-		return (1-np.exp(-varphi_sim*(m)))/varphi_sim
+		return (1-np.exp(-varphi_sim*(m/phi)))/varphi_sim
 
 	@njit
 	def CES(S_saq, S_eb, S_mcq,S_hap, sigma):
@@ -133,8 +136,10 @@ def edumodel_function_factory(params, theta,share_saq,\
 					 	+ (gamma_2**(1/sigma))*S_eb**((sigma - 1)/sigma)\
 					 	+ (gamma_3**(1/sigma))*S_mcq**((sigma - 1)/sigma)\
 					 	+ (gamma_4**(1/sigma))*S_hap**((sigma - 1)/sigma)
+		
+		#rote_learning = kappa_1*S_saq + kappa_2*S_eb + kappa_3*S_mcq + kappa_4*S_hap
 
-		return (inside_sum**(sigma/(sigma - 1)))**gamma_M
+		return (inside_sum**(sigma/(sigma - 1)))#**gamma_M
 
 	@njit 
 	def CES_2(S_saq, m, sigma):
@@ -146,7 +151,7 @@ def edumodel_function_factory(params, theta,share_saq,\
 					 	+ ((1-gamma_5)**(1/sigma))*m**((sigma - 1)/sigma)\
 
 
-		return (inside_sum**(sigma/(sigma - 1)))
+		return (inside_sum**(sigma/(sigma - 1)))#**gamma_M
 
 
 	@njit 
@@ -210,9 +215,12 @@ def edumodel_function_factory(params, theta,share_saq,\
 		#					+ gamma_44*np.log(S_hap)*np.log(S_hap)
 		
 		# Knowledge creation is augmented by previous knowledge 
-		SAQIN = CES_2(S_saq, m, sigma_SAQ)
+		#SAQIN = CES_2(S_saq, m, sigma_SAQ)
+		#MCQIN = CES_2(S_mcq, m, sigma_SAQ)
 
-		IM = es*phi*CES(SAQIN,S_eb,S_mcq,S_hap, sigma_M)
+		IM  = es*phi*CES(S_saq,S_eb,S_mcq,S_hap, sigma_M)
+
+		#IM = CES_2(IM_in, m, sigma_SAQ)
 
 		#IM = (((S_saq**gamma_1)*(S_eb**gamma_2)*(S_mcq**gamma_3)*(S_hap**gamma_4))**gamma_5)
 		# Observable study outputs
@@ -221,18 +229,18 @@ def edumodel_function_factory(params, theta,share_saq,\
 			S_mcq_hat = (S_mcq/s_share_mcq[t])*hours_to_hap(m)
 
 		else:
-			S_mcq_hat  = S_mcq*.1
+			S_mcq_hat  = S_mcq*.01
 
 		if s_share_hap[t] >0:
 		  	S_hap_hat =  (S_hap/s_share_hap[t])*hours_to_hap(m)
 		  	
 		else:
-		 	S_hap_hat = S_hap*.1
+		 	S_hap_hat = S_hap*.01
 
 		if s_share_eb[t]> 0:
 			S_eb_hat = 	(S_eb/s_share_eb[t])*hours_to_hap(m)
 		else: 
-			S_eb_hat =0
+			S_eb_hat = S_eb*.01
 
 		if s_share_saq[t]> 0:
 			S_saq_hat = (S_saq/s_share_saq[t])*hours_to_hap(m)
@@ -240,11 +248,13 @@ def edumodel_function_factory(params, theta,share_saq,\
 			S_saq_hat = S_saq*.01
 
 		# Rate of current MCQ answers 
-		rate_of_correct = max(min(correct_mcq_rate(m,t), .65), .71)
+		#rate_of_correct = max(min(correct_mcq_rate(m,t), .65), .71)
+
+		rate_of_correct = theta[t]
 
 		# Calculate coursework grade points generated 
-		IMh = max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\
-					+ b*S_hap_hat)
+		IMh = min(max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\
+					+ b*S_hap_hat),15)
 
 
 		return IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat

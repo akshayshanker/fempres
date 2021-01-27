@@ -31,36 +31,39 @@ def plot_results(moments_sim_all,
 	col_dict = {'data': 'black', 'sim':'gray'}
 	markers=['x', 'o']
 	ID = np.random.randint(0,9999)
-	plot_path = "plot_test_{}/".format(ID)
+	plot_path = "plots/plot_test_{}/".format(ID)
 	Path(plot_path).mkdir(parents=True, exist_ok=True)
 	# loop through each of the variables in the list
 	for i, name in zip(np.arange(len(variable_list)),variable_list):
 		# create a plot for this variable
-		fig, ax = plt.subplots(1,1)
-		#ax = ax.flatten()
+		fig, ax = plt.subplots(4,2)
+		ax = ax.flatten()
 
 		#loop through each of the group
 		for j, group_id in zip(np.arange(len(group_list)),group_list):
 			xs = np.arange(11)
 			ys = moments_data_all[j,:,i]
-			p = ax.plot(xs, ys, marker=markers[0], color=col_dict['data'], linestyle=linestyles[0],
+			p = ax[j].plot(xs, ys, marker=markers[0], color=col_dict['data'], linestyle=linestyles[0],
 						label=line_names[0], linewidth=2)
 			ys = moments_sim_all[j,:,i]
-			p = ax.plot(xs, ys, marker=markers[1], color=col_dict['sim'], linestyle=linestyles[1],
+			p = ax[j].plot(xs, ys, marker=markers[1], color=col_dict['sim'], linestyle=linestyles[1],
 			label=line_names[1], linewidth=2)
 
-			ax.set_xlabel('Week')
-			ax.set_title(name)
+			#ax[j].set_xlabel('Week')
+			ax[j].set_title(group_id)
 			#ax[j].set_ylim(ylim)
-			ax.spines['top'].set_visible(False)
-			ax.spines['right'].set_visible(False)
-			ax.legend(loc='upper left', ncol=2)
+			ax[j].spines['top'].set_visible(False)
+			ax[j].spines['right'].set_visible(False)
+			#ax[j].legend(loc='upper left', ncol=2)
 		
+		handles, labels = ax[7].get_legend_handles_labels()
+		fig.legend(handles, labels, loc='upper center', ncol=2)
+		fig.tight_layout()
 		#handles, labels = ax.get_legend_handles_labels()
 		#fig.legend(handles, labels, loc='upper center', ncol=2)
 		#fig.tight_layout()
 
-		fig.savefig("plot_test_{}/{}.png".format(ID, name + '_Jan18'), transparent=True)
+		fig.savefig("plots/plot_test_{}/{}.png".format(ID, name + '_Jan18'), transparent=True)
 
 	return 
 
@@ -252,7 +255,7 @@ if __name__ == "__main__":
 	world = MPI4py.COMM_WORLD
 
 	# Name of the model that is estimated
-	estimation_name = 'test_CES3'
+	estimation_name = 'Preliminary_all_v1'
 	
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -265,8 +268,8 @@ if __name__ == "__main__":
 	moments_data_mapped = edumodel.map_moments(moments_data)
 
 	# Assign model tau group according to each processor according to its rank
-	#model_name = list(moments_data_mapped.keys())[world.rank]
-	model_name = 'tau_01'
+	model_name = list(moments_data_mapped.keys())[world.rank]
+	#model_name = 'tau_01'
 
 	# Load generic model settings 
 	with open("{}settings.yml".format(settings_folder), "r") as stream:
@@ -285,13 +288,13 @@ if __name__ == "__main__":
 	#param_cov = sampmom[1]
 	param_cov = np.zeros(np.shape(sampmom[1]))
 
-	
-	param_means[5] = .1   #delta
-	param_means[12] = .25  #gamma_1
-	param_means[13] = .2  #gamma_2
-	param_means[14] = .1  #gamma_3
-	param_means[19] = 1.7 #kappa_1
-	param_means[10] = .05  #alpha
+	#param_means[2]  = 2
+	#param_means[2]  = 1.2
+	#param_means[0]  = .86
+	#param_means[5]  = .8
+	#param_means[6]  = 4.9
+	#param_means[7]  = .33
+	#param_means[13]  = 1.5
 
 
 	# Blocked out code to adjust previous estimate values and number of params
@@ -325,8 +328,8 @@ if __name__ == "__main__":
 																row['UB']])
 
 	# Run the model and generate the moments on each processor
-	edu_model = edumodel.EduModelParams('tau_01',
-							edu_config['tau_01'],
+	edu_model = edumodel.EduModelParams(model_name,
+							edu_config[model_name],
 							U,
 							U_z,
 							random_draw = True,
@@ -354,7 +357,7 @@ if __name__ == "__main__":
 		std_errs = np.empty((8, len(param_all[0,:])))
 
 		for i in range(len(std_errs)):
-			std_errs[i,:] = np.diag(param_all_cov[i])
+			std_errs[i,:] = np.sqrt(np.diag(param_all_cov[i]))
 
 
 		# re-format data moments so in the same format as sim moments, combined
@@ -373,7 +376,7 @@ if __name__ == "__main__":
 		list_moments = ['av_final',\
 						'av_mark',\
 						'av_markw13_exp1',\
-						'Exam knowledge stock',\
+						'Knowledge accumulation',\
 						'av_game_session_hours_cumul',\
 						'av_ebook_session_hours_cumul',\
 						'av_mcq_session_hours_cumul',\
@@ -381,7 +384,7 @@ if __name__ == "__main__":
 						'av_player_happy_deploym_cumul',\
 						'av_mcq_attempt_nonrev_cumul',\
 						'av_sa_attempt_cumul', \
-						'av_mcq_Cshare_nonrev_cumul',\
+						'av_totebook_pageviews_cumul',\
 						'sd_final',\
 						'sd_mark',\
 						'sd_markw13_exp1',\
@@ -393,12 +396,12 @@ if __name__ == "__main__":
 						'sd_player_happy_deploym_cumul',\
 						'sd_mcq_attempt_nonrev_cumul',\
 						'sd_sa_attempt_cumul', \
-						'sd_mcq_Cshare_nonrev_cumul',\
+						'sd_totebook_pageviews_cumul',\
 						'acgame_session_hours',\
 						'acebook_session_hours',\
 						'acmcq_session_hours',\
 						'acsaq_session_hours',\
-						'acmcq_Cshare_nonrev',\
+						'actotebook_pageviews',\
 						'acmcq_Cattempt_nonrev',\
 						'cmcsaq_session_hours',\
 						'cgsaq_session_hours',\
@@ -406,8 +409,19 @@ if __name__ == "__main__":
 						'cesaq_session_hours',\
 						'cemcq_session_hours',\
 						'ceg_session_hours',\
-						'c_atar_ii']
-
+						'co_fgame_session_hours_cumul',\
+						'co_febook_session_hours_cumul',\
+						'co_fmcq_session_hours_cumul',
+						'co_fgame_session_hours_cumul',\
+						'co_fsa_attempt_cumul',\
+						'co_ftotebook_pageviews_cumul',\
+						'co_fmcq_attempt_nonrev_cumul',\
+						'co_fsa_attempt_cumul',\
+						'co_gam',\
+						'co_eboo',\
+						'co_mc',\
+						'co_sa',\
+						'co_fatar_ii']
 
 		param_names_old = [
 					'beta_bar',
@@ -423,14 +437,12 @@ if __name__ == "__main__":
 					'gamma_1',
 					'gamma_2',
 					'gamma_3',
-					'gamma_5',
-					'gamma_M',
 					'sigma_M',
-					'sigma_SAQ',
-					'kappa_2',
 					'kappa_1',
+					'kappa_2',
+					'kappa_3',
+					'kappa_4',
 					'd',
-					'varphi',
 					'varphi_sim']
 
 		param_names_new = [
@@ -443,19 +455,17 @@ if __name__ == "__main__":
 				'gamma_3',
 				'gamma_1',
 				'gamma_2',
-				'gamma_5',
-				'gamma_M',
 				'sigma_M',
-				'sigma_SAQ',
+				'kappa_3',
 				'kappa_1',
 				'kappa_2',
+				'kappa_4',
 				#Gamma symbols below do not match table
 				'zeta_star',
 				'sigma_zeta',
 				'zeta_hstar',
 				'sigma_hzeta',
 				'lambda_E',
-				'varphi',
 				'varphi_sim'
 			]
 		
@@ -463,7 +473,7 @@ if __name__ == "__main__":
 		table_row_names = [
 			"Depreciation d",
 			"Course grade utility weight",
-			#"HYperbolic discount factor",
+			#"Hyperbolic discount factor",
 			"\hspace{0.4cm}Discount factor mean",
 			"\hspace{0.4cm}Discount factor persistence",
 			"\hspace{0.4cm}Discount factor std. deviation",
@@ -472,19 +482,20 @@ if __name__ == "__main__":
 			"\hspace{0.4cm}Time solving MCQs",
 			"\hspace{0.4cm}Time answering SAQs",
 			"\hspace{0.4cm}Time studying the textbook",
-			"\hspace{0.4cm}Overall study hours elasticity",
-			"\hspace{0.4cm}Previous knowledge share to SAQ effectiveness",
-			"\hspace{0.4cm}Total study elasticity of substitution",
+			"\hspace{0.4cm}Overall study elasticity",
+			"\hspace{0.4cm}Previous knowledge share in CES nest",
+			"\hspace{0.4cm}Study elasticity of substitution",
 			"\hspace{0.4cm}SAQ and knowledge stock elasticity of substitution",
-			"\hspace{0.4cm}Leisure share from E-book hours",
-			"\hspace{0.4cm}Leisure share from game hours",
+			"\hspace{0.4cm}Effort cost of MCQ ",
+			"\hspace{0.4cm}Effort cost of SAQ",
+			"\hspace{0.4cm}Effort cost of book",
+			"\hspace{0.4cm}Effort cost of sim",
 			#"Final exam ability",
 			"\hspace{0.4cm}Real exam ability mean",
 			"\hspace{0.4cm}Real exam ability std. deviation",
 			"\hspace{0.4cm}Perceived exam ability mean",
 			"\hspace{0.4cm}Perceived exam ability std. deviation",
 			"\hspace{0.4cm}Exam difficulty parameter",
-			"\hspace{0.4cm}MCQ question difficulty parameter",
 			"\hspace{0.4cm}Knowledge to study output parameter"
 		]
 
@@ -496,13 +507,12 @@ if __name__ == "__main__":
 			r"$\rho_{\beta}$",
 			r"$\sigma_{\beta}$",
 			r"$\delta$",
-			r"$\gamma^{mcq}$",
+			r"$\gamma^{MCQ}$",
 			r"$\gamma^{SAQ}$",
 			r"$\gamma^{book}$",
-			r"$\gamma^{M}$",
-			r"$\tilde{\gamma}^{M}$",
 			r"$\sigma^{M}$",
-			r"$\sigma^{SAQ}$",
+			r"$\kappa^{MCQ}$",
+			r"$\kappa^{SAQ}$",
 			r"$\kappa^{book}$",
 			r"$\kappa^{sim}$",
 			r"$\xi$",
@@ -510,16 +520,15 @@ if __name__ == "__main__":
 			r"$\xi^*$",
 			r"$\sigma_{\varepsilon^\xi{^*}}$",
 			r"$\lambda^E$",
-			r"$\varphi$",
 			r"$\vartheta$"
 		]
 		#list_params = param_random_bounds.keys()
 		#NOTE: CHANGE mean_array and se_array to the names of your two 8 x n arrays 
 		#which contain all mean estimates and all S.E estimates respectively.
 
-		group_list = ['Draw_1']
+		#group_list = ['Draw_1']
 
-		#group_list = list(moments_data_mapped.keys())
+		group_list = list(moments_data_mapped.keys())
 
 		#make_tables(param_all, std_errs, param_names_new, param_names_old, 
 		#			table_row_names, table_row_symbols, compile=True)
