@@ -1,3 +1,19 @@
+ 
+"""
+Module estimates tabulates and plots results for estimates
+for EduModel
+
+Script must be run using Mpi with number of cores = groups
+
+Example (on Gadi normal compute node):
+
+module load python3/3.7.4
+module load openmpi/4.0.2
+
+mpiexec -n 8 python3 -m mpi4py smm.py
+
+"""
+
 # Import packages
 import yaml
 import gc
@@ -21,10 +37,22 @@ import collections
 import edumodel 
 from solve_policies.studysolver import generate_study_pols
 
-def plot_results(moments_sim_all,
+def plot_results_all(moments_sim_all,
 				 moments_data_all,
 				 variable_list,
 				 group_list):
+
+	""" Plots results for visual diagnostics (not final paper)
+
+	Paramters
+	---------
+
+	Returns
+	-------
+
+	Todo
+	----
+	"""
 
 	line_names =['data', 'sim']
 	linestyles=["-","-"]
@@ -67,14 +95,36 @@ def plot_results(moments_sim_all,
 
 	return 
 
-##############################################################################
-# BEGIN FUNCTIONS FOR TABLE CONVERSION
-##############################################################################
-#INPUT: Numpy array containing parameter estimates (for either all the means or all the S.Es)
-#OUTPUT: List of lists with 8 elements in order of columns in the pdf
-# eg. 0 = Male president, Undisclosed gender, Males
-#     7 = Female president, disclosed gender, Females
+def plot_results_paper(moments_sim_all,
+				 		moments_data_all,
+				 		variable_list,
+				 		group_list):
+	
+	return 
+
+
 def array_to_ordered_list(array, param_names_new, param_names_old):
+
+	"""
+	What does this func do? Andrew?
+	# INPUT: Numpy array containing parameter estimates (for either all the means or all the S.Es)
+	# OUTPUT: List of lists with 8 elements in order of columns in the pdf
+	# eg. 0 = Male president, Undisclosed gender, Males
+	#     7 = Female president, disclosed gender, Females
+
+	Parameters
+	---------
+	array : 
+	param_names_new :
+	param_names_old :
+
+	Returns
+	------
+
+	Todo
+	----
+	Document this
+	"""
 	#Convert numpy array to a list of lists
 	A_list = array.tolist()
 
@@ -95,10 +145,12 @@ def array_to_ordered_list(array, param_names_new, param_names_old):
 	A_list_new[:] = [A_list_new[i] for i in mf_order]
 	return A_list_new
 
-#INPUT: The means and standard error lists returned from "array_to_ordered_list"
-#and the row/symbol name lists
-#OUTPUT: Pandas data frame
+
 def ordered_lists_to_df(mean_list, se_list, table_row_names, table_row_symbols, pres = "male"):
+	"""
+	#INPUT: The means and standard error lists returned from "array_to_ordered_list"
+	#and the row/symbol name lists
+	#OUTPUT: Pandas data frame"""
 	#Stop long strings being cut off with ...
 	pd.set_option('display.max_colwidth', None)
 
@@ -123,8 +175,8 @@ def ordered_lists_to_df(mean_list, se_list, table_row_names, table_row_symbols, 
 	df = pd.DataFrame(param_list).transpose()
 	return df
 
-#Convert pandas dataframe to tex string, no headings, only the numeric part
 def df_to_tex_basic(df): 
+	#Convert pandas dataframe to tex string, no headings, only the numeric part
 	#Convert df to tex code, 3 decimal places, no row numbering
 	table_tex = df.to_latex(
 	header = False,
@@ -134,9 +186,10 @@ def df_to_tex_basic(df):
 	index = False)
 	return table_tex
 
-#Add tabular environment/landscape to table_tex string
+
 def tex_add_environment(table_tex, pres = "male"):
 	#Add code before/after tabular environment
+	#Add tabular environment/landscape to table_tex string
 	table_env_start = [
 		r"\begin{landscape}",
 		r"\begin{table}[htbp]",
@@ -156,9 +209,10 @@ def tex_add_environment(table_tex, pres = "male"):
 	table_tex = table_tex.replace(r"\bottomrule", r"\hline" + "\n" + r"\hline")
 	return table_tex
 
-#Add multi-level column headings to table tex string
+
 def tex_add_col_headings(table_tex, pres = "male"):
 	#Add code for multi-level column headings
+	#Add multi-level column headings to table tex string
 	headings = [
 		r"& & \multicolumn{4}{c}{Undisclosed Gender} &\multicolumn{4}{c}{Disclosed Gender}\\",
 		r"\cmidrule(l{0.2cm}r{0.3cm}){3-6}\cmidrule(l{0.2cm}r{0.3cm}){7-10}",
@@ -175,8 +229,9 @@ def tex_add_col_headings(table_tex, pres = "male"):
 	table_tex = table_tex.replace(r"\toprule", r"\hline" + "\n" + r"\hline" + "\n".join(headings) + "\n")
 	return table_tex
 
-#Add extra (multi-level) row headings:
+
 def tex_add_row_headings(table_tex):
+	#Add extra (multi-level) row headings:
 	row_headings = [
 		r"Exponential discount factor & & & & & & & & & \\" + "\n",
 		r"\hline" + "\n" + r"Study effectiveness for knowledge creation & & & & & & & & & \\" + "\n",
@@ -201,9 +256,10 @@ def df_to_tex_complete(df, pres = "male"):
 	table_tex = tex_add_row_headings(table_tex)
 	return table_tex
 
-#Given arrays of mean/S.E. estimates, and new vs old order of parameters, makes two tables.
-#If compile = True, then adds a preamble to tex so that output file can directly compile in LaTeX
+
 def make_tables(mean_array, se_array, param_names_new, param_names_old, table_row_names, table_row_symbols, compile = False):
+	#Given arrays of mean/S.E. estimates, and new vs old order of parameters, makes two tables.
+	#If compile = True, then adds a preamble to tex so that output file can directly compile in LaTeX
 	#Convert arrays to lists ready to be processed into dataframes.
 	mean_list = array_to_ordered_list(mean_array, param_names_new, param_names_old)
 	se_list = array_to_ordered_list(se_array, param_names_new, param_names_old)
@@ -240,11 +296,6 @@ def make_tables(mean_array, se_array, param_names_new, param_names_old, table_ro
 	f.close()
 	return
 
-##############################################################################
-# END FUNCTIONS FOR TABLE CONVERSION
-##############################################################################
-
-
 if __name__ == "__main__":
 
 	from mpi4py import MPI as MPI4py
@@ -269,7 +320,6 @@ if __name__ == "__main__":
 
 	# Assign model tau group according to each processor according to its rank
 	model_name = list(moments_data_mapped.keys())[world.rank]
-	#model_name = 'tau_01'
 
 	# Load generic model settings 
 	with open("{}settings.yml".format(settings_folder), "r") as stream:
@@ -283,18 +333,9 @@ if __name__ == "__main__":
 	# To run the model with the latest estimated moments, set the covariance
 	# of the paramter distribution to zero so the mean is drawn 
 
-	#param_cov = np.zeros(np.shape(sampmom[1]))
 	param_means = sampmom[0]
 	#param_cov = sampmom[1]
 	param_cov = np.zeros(np.shape(sampmom[1]))
-
-	#param_means[2]  = 2
-	#param_means[2]  = 1.2
-	#param_means[0]  = .86
-	#param_means[5]  = .8
-	#param_means[6]  = 4.9
-	#param_means[7]  = .33
-	#param_means[13]  = 1.5
 
 
 	# Blocked out code to adjust previous estimate values and number of params
@@ -316,7 +357,6 @@ if __name__ == "__main__":
 
 	U = np.load(scr_path+'/'+ 'U.npy')
 	U_z = np.load(scr_path+'/'+ 'U_z.npy')
-
 
 
 	# Run model (note, param_random_bounds serves no purpose here, it should be deprecated)
@@ -345,7 +385,7 @@ if __name__ == "__main__":
 	param_all = world.gather(param_means, root = 0)
 	param_all_cov = world.gather(sampmom[1], root = 0)
 
-	# Now gather all the moments to the master processor (rank 0)
+	# Gather all the moments to the master processor (rank 0)
 	if world.rank == 0:
 		
 		moments_sim_all  =  np.array(moments_sim_all)
@@ -367,12 +407,8 @@ if __name__ == "__main__":
 
 		# Generate new data-frames for plotting 
 
-		#np.save('moments_all',moments_sim_all )
-		#np.save('param_all', param_all)
-
 		# Each item in moment list is a 11 x 36 array
 		# The rows are are 
-
 		list_moments = ['av_final',\
 						'av_mark',\
 						'av_markw13_exp1',\
@@ -466,8 +502,7 @@ if __name__ == "__main__":
 				'zeta_hstar',
 				'sigma_hzeta',
 				'lambda_E',
-				'varphi_sim'
-			]
+				'varphi_sim']
 		
 		#Row names for table
 		table_row_names = [
@@ -526,11 +561,9 @@ if __name__ == "__main__":
 		#NOTE: CHANGE mean_array and se_array to the names of your two 8 x n arrays 
 		#which contain all mean estimates and all S.E estimates respectively.
 
-		#group_list = ['Draw_1']
-
 		group_list = list(moments_data_mapped.keys())
 
 		#make_tables(param_all, std_errs, param_names_new, param_names_old, 
 		#			table_row_names, table_row_symbols, compile=True)
 
-		plot_results(moments_sim_all,moments_data_all, list_moments, group_list)
+		plot_results_all(moments_sim_all,moments_data_all, list_moments, group_list)

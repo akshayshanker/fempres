@@ -8,7 +8,7 @@ module load openmpi/4.0.2
 
 for var in {1..10}
 do
-	mpiexec -n 1920  python3 -m mpi4py smm.py
+	mpiexec -n 19200  python3 -m mpi4py smm.py
 done
 
  

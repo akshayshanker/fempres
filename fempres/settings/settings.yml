@@ -97,8 +97,8 @@ baseline_lite:
     kappa_1: .3
     kappa_2: .2
     kappa_3: .2
-    b: 0.0000066
-    a: 0.0095
+    b: 0.066
+    a: 0.005
     d: .01
     varphi: 1
     varphi_sim: .4
@@ -216,8 +216,8 @@ tau_00:
         kappa_1: .3
         kappa_2: .2
         kappa_3: .2
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: 1
@@ -324,8 +324,8 @@ tau_01:
         kappa_1: 1
         kappa_2: 1
         kappa_3: 1
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -443,8 +443,8 @@ tau_10:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -562,8 +562,8 @@ tau_11:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -682,8 +682,8 @@ tau_20:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -801,8 +801,8 @@ tau_21:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -920,8 +920,8 @@ tau_30:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4
@@ -1039,8 +1039,8 @@ tau_31:
         gamma_33: 0
         gamma_34: 0
         gamma_44: 0
-        b: 0.0000066
-        a: 0.0095
+        b: 0.066
+        a: 0.005
         d: .01
         varphi: 1
         varphi_sim: .4

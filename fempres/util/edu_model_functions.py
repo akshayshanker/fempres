@@ -183,10 +183,6 @@ def edumodel_function_factory(params, theta,share_saq,\
 		------
 
 		"""
-
-		# Translog production for investment into exam knowledge
-		# stock 
-
 		# Make sure study hours are non-negative 
 		S_saq = max(1e-10,S_saq)
 		S_eb = max(1e-10,S_eb)
@@ -198,63 +194,36 @@ def edumodel_function_factory(params, theta,share_saq,\
 		if t == 0:
 			S_saq = .01
 
-		# Calculate the translog
-		#lnIM = np.log(phi)  + gamma_1*np.log(S_saq) \
-		#					+ gamma_2*np.log(S_eb)\
-		#					+ gamma_3*np.log(S_mcq)\
-		#					+ gamma_4*np.log(S_hap)\
-		#					+ gamma_11*np.log(S_saq)*np.log(S_saq)\
-		#					+ gamma_12*np.log(S_saq)*np.log(S_eb)\
-		#					+ gamma_13*np.log(S_saq)*np.log(S_mcq)\
-		#					+ gamma_14*np.log(S_saq)*np.log(S_hap)\
-		#					+ gamma_23*np.log(S_eb)*np.log( S_mcq)\
-		#					+ gamma_24*np.log(S_eb)*np.log(S_hap)\
-		#					+ gamma_34*np.log(S_mcq)*np.log(S_hap)\
-		#					+ gamma_22*np.log(S_eb)*np.log(S_eb)\
-		#					+ gamma_33*np.log(S_mcq)*np.log(S_mcq)\
-		#					+ gamma_44*np.log(S_hap)*np.log(S_hap)
-		
-		# Knowledge creation is augmented by previous knowledge 
-		#SAQIN = CES_2(S_saq, m, sigma_SAQ)
-		#MCQIN = CES_2(S_mcq, m, sigma_SAQ)
-
 		IM  = es*phi*CES(S_saq,S_eb,S_mcq,S_hap, sigma_M)
-
-		#IM = CES_2(IM_in, m, sigma_SAQ)
-
-		#IM = (((S_saq**gamma_1)*(S_eb**gamma_2)*(S_mcq**gamma_3)*(S_hap**gamma_4))**gamma_5)
-		# Observable study outputs
 
 		if s_share_mcq[t] > 0:
 			S_mcq_hat = (S_mcq/s_share_mcq[t])*hours_to_hap(m)
-
 		else:
 			S_mcq_hat  = S_mcq*.01
-
 		if s_share_hap[t] >0:
 		  	S_hap_hat =  (S_hap/s_share_hap[t])*hours_to_hap(m)
-		  	
 		else:
 		 	S_hap_hat = S_hap*.01
-
 		if s_share_eb[t]> 0:
 			S_eb_hat = 	(S_eb/s_share_eb[t])*hours_to_hap(m)
 		else: 
 			S_eb_hat = S_eb*.01
-
 		if s_share_saq[t]> 0:
 			S_saq_hat = (S_saq/s_share_saq[t])*hours_to_hap(m)
 		else:
 			S_saq_hat = S_saq*.01
 
 		# Rate of current MCQ answers 
-		#rate_of_correct = max(min(correct_mcq_rate(m,t), .65), .71)
-
 		rate_of_correct = theta[t]
 
 		# Calculate coursework grade points generated 
+		# No points from sim after t = 5
+		if t > 5:
+			b_actual = 0
+		else:
+			b_actual = b
 		IMh = min(max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\
-					+ b*S_hap_hat),15)
+					+ b_actual*S_hap_hat),20)
 
 
 		return IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat

@@ -142,7 +142,7 @@ def iter_SMM(config, 			 # configuration settings for the model name
 	gamma_XEM : array
 	S_star : array
 	t : int
-	 	iteration numbner 
+		iteration numbner 
 	tau_world : communicator class 
 				 MPI sub-groups for RCTx gender groups 
 	N_elite : int
@@ -384,11 +384,12 @@ if __name__ == "__main__":
 	
 	# Estimation parameters  
 	tol = 1E-14
-	N_elite = 40
+	N_elite = 60
 	d = 3
-	estimation_name = 'Preliminary_all_v1'
+	estimation_name = 'Preliminary_all_v2'
 	world = MPI4py.COMM_WORLD
 	number_tau_groups = 8
+	t = 0
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
@@ -426,11 +427,31 @@ if __name__ == "__main__":
 			param_random_bounds[row['parameter']] = np.float64([row['LB'],
 																row['UB']])
 	
-	# The error vectors for the estimation 
+	# The error vectors for the estimation
+	if world_rank == 0:
+		if t == 0:
+			# Generate random points for beta and es
+			U = np.random.rand(edu_config['baseline_lite']['parameters']['S'],
+						edu_config['baseline_lite']['parameters']['N'],\
+						edu_config['baseline_lite']['parameters']['T'],2)
+
+			# Generate random points for ability and percieved ability 
+			U_z = np.random.rand(edu_config['baseline_lite']['parameters']['S'],
+						edu_config['baseline_lite']['parameters']['N'],2)
+
+			scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
+			Path(scr_path2).mkdir(parents=True, exist_ok=True)
+			np.save(scr_path2+'/'+ 'U.npy',U)
+			np.save(scr_path2+'/'+ 'U_z.npy',U_z)
+		else:
+			pass 
+	else:
+		pass 
+
+
+	world.Barrier()	
 	U = np.load(scr_path+'/'+ 'U.npy')
 	U_z = np.load(scr_path+'/'+ 'U_z.npy')
-
-	tau_world.Barrier()	
 
 	with open('{}random_param_bounds.csv'\
 	.format(settings_folder), newline='') as pscfile:
@@ -442,7 +463,6 @@ if __name__ == "__main__":
 	start = time.time()
 
 	# Initialize the SMM error grid
-	t = 1
 	if t == 0:
 		load_saved = False
 	else:

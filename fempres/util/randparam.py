@@ -30,7 +30,7 @@ def rand_p_generator(param_deterministic, # dictionary containing deterministic 
     param_random_cov = np.array(param_random_cov)
     random_draw = np.random.uniform(0, 1)
     # noise injection rate of 10%
-    if random_draw< 0 and initial==0:
+    if random_draw< 0.02 and initial==0:
         np.fill_diagonal(param_random_cov, param_random_cov.diagonal()*2)
 
     in_range = False
