@@ -113,7 +113,7 @@ def array_to_ordered_list(array, param_names_new, param_names_old):
 	#     7 = Female president, disclosed gender, Females
 
 	Parameters
-	---------
+	----------
 	array : 
 	param_names_new :
 	param_names_old :
@@ -125,6 +125,7 @@ def array_to_ordered_list(array, param_names_new, param_names_old):
 	----
 	Document this
 	"""
+	
 	#Convert numpy array to a list of lists
 	A_list = array.tolist()
 
@@ -186,7 +187,6 @@ def df_to_tex_basic(df):
 	index = False)
 	return table_tex
 
-
 def tex_add_environment(table_tex, pres = "male"):
 	#Add code before/after tabular environment
 	#Add tabular environment/landscape to table_tex string
@@ -209,7 +209,6 @@ def tex_add_environment(table_tex, pres = "male"):
 	table_tex = table_tex.replace(r"\bottomrule", r"\hline" + "\n" + r"\hline")
 	return table_tex
 
-
 def tex_add_col_headings(table_tex, pres = "male"):
 	#Add code for multi-level column headings
 	#Add multi-level column headings to table tex string
@@ -228,7 +227,6 @@ def tex_add_col_headings(table_tex, pres = "male"):
 		headings[-1] = r"\textit{\textbf{Panel B: Female President}} & & & & & & & & & \\"
 	table_tex = table_tex.replace(r"\toprule", r"\hline" + "\n" + r"\hline" + "\n".join(headings) + "\n")
 	return table_tex
-
 
 def tex_add_row_headings(table_tex):
 	#Add extra (multi-level) row headings:
@@ -255,7 +253,6 @@ def df_to_tex_complete(df, pres = "male"):
 	table_tex = tex_add_col_headings(table_tex, pres)
 	table_tex = tex_add_row_headings(table_tex)
 	return table_tex
-
 
 def make_tables(mean_array, se_array, param_names_new, param_names_old, table_row_names, table_row_symbols, compile = False):
 	#Given arrays of mean/S.E. estimates, and new vs old order of parameters, makes two tables.
