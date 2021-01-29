@@ -40,7 +40,6 @@ if __name__ == "__main__":
 	MPI4py.pickle.__init__(pickle.dumps, pickle.loads)
 	from pathlib import Path
 
-	
 	# Estimation settings and labels   
 	estimation_name = 'Preliminary_all_v5'
 	scr_path = '/scratch/pv33/edu_model_temp/' + estimation_name
@@ -67,7 +66,7 @@ if __name__ == "__main__":
 	# Eeach core opens the baseline parameters and model settings based on its color (tau group)
 	# Load the data and sort and map the moments 
 	# moments_data are moments for this group 
-	moments_data_raw= pd.read_csv('{}moments_clean.csv'\
+	moments_data_raw = pd.read_csv('{}moments_clean.csv'\
 					.format(settings_folder))
 	moments_data_mapped = edumodel.map_moments(moments_data_raw)
 	# Assign model tau group according to each core according to processor color
@@ -130,7 +129,7 @@ if __name__ == "__main__":
 	# generate pertubed parameter +e
 	theta_e_plus = np.copy(theta_0)
 	theta_e_plus[tau_world_rank] = theta_0[tau_world_rank] + epsilon 
-	print(theta_e_plus)
+	#print(theta_e_plus)
 	moments_sim_array_clean_plus_epsilon = gen_moments(theta_e_plus)
 
 	theta_e_minus = np.copy(theta_0)
@@ -147,14 +146,25 @@ if __name__ == "__main__":
 	tau_world.Barrier()
 
 	jacobian_T = tau_world.gather(delta_moments_del_tau, root = 0)
-	jacobian = np.transpose(np.array(jacobian_T))
-
+	
 	# Now, andrew, on each master tau_core do the manipulation to generate the standard erros and tabulate results table
-
 	if tau_world_rank == 0:
+		jacobian = np.transpose(np.array(jacobian_T))
 		# do manupulation, transpose inverse etc. 
 		# create SE errors array, take np.sqrt of diagolas
 		# plot estimates table 
 
-		std_errs = np.pinv(np.dot(np.transpose(jacobian), jacobian))
-	
+		cov_matrix = np.pinv(np.dot(np.transpose(jacobian), jacobian))
+
+	# Collect the 8 std errors and tau_0s on the main 
+	world.barrier()
+	if tau_world_rank == 0:
+			param_all = world.gather(theta_0, root = 0)
+			param_stds = world.gather(param_stds, root = 0)
+
+	if world.rank == 0:
+		# tabulate the results as below:
+
+		
+
+
