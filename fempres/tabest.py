@@ -3,7 +3,7 @@ from tabulate import tabulate
 import numpy as np
 import csv
 
-mod_name = 'Preliminary_all_v2/tau_10'
+mod_name = 'Preliminary_all_v5/tau_20'
  
 dict_means = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format(mod_name),"rb"))
 gamma = pickle.load(open("/scratch/pv33/edu_model_temp/{}/gamma_XEM.smms".format(mod_name),"rb")) 
@@ -34,7 +34,7 @@ headers = ["Parameter", "Estimate", "Std. Err."]
 print(tabulate([(k,) + v for k,v in results.items()], headers = headers))
 
 
-mod_name = 'Preliminary_all_v2/tau_30'
+mod_name = 'Preliminary_all_v5/tau_30'
  
 dict_means = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format(mod_name),"rb"))
 gamma = pickle.load(open("/scratch/pv33/edu_model_temp/{}/gamma_XEM.smms".format(mod_name),"rb")) 

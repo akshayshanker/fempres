@@ -217,13 +217,13 @@ def edumodel_function_factory(params, theta,share_saq,\
 		rate_of_correct = theta[t]
 
 		# Calculate coursework grade points generated 
-		# No points from sim after t = 5
-		if t > 5:
+		# No points from sim after t = 8
+		if t > 8:
 			b_actual = 0
 		else:
 			b_actual = b
 		IMh = min(max(0, a*(rate_of_correct*iota_c + (1-rate_of_correct)*iota_i)*S_mcq_hat\
-					+ b_actual*S_hap_hat),20)
+					+ b_actual*S_hap_hat),16)
 
 
 		return IM, IMh, S_mcq_hat,S_hap_hat,S_eb_hat,S_saq_hat

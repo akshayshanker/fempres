@@ -56,7 +56,7 @@ baseline_lite:
   parameters:
     N: 350
     S: 1000
-    M_max: 600
+    M_max: 200
     M_min: .01
     Mh_max: 100
     Mh_min: .0001
@@ -171,7 +171,7 @@ tau_00:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -288,7 +288,7 @@ tau_01:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -398,7 +398,7 @@ tau_10:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -517,7 +517,7 @@ tau_11:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -637,7 +637,7 @@ tau_20:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -756,7 +756,7 @@ tau_21:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -874,7 +874,7 @@ tau_21:
 tau_30:
     parameters:
         N: 350
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001
@@ -994,7 +994,7 @@ tau_31:
     parameters:
         N: 350
         S: 1000
-        M_max: 600
+        M_max: 200
         M_min: .01
         Mh_max: 100
         Mh_min: .0001

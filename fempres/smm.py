@@ -84,6 +84,7 @@ def gen_RMS(edu_model,\
 				  - moments_data_array\
 				  [~np.isnan(moments_data_array)])/moments_data_array[~np.isnan(moments_data_array)]
 
+	deviation_r[0:22] = deviation_r[0:22]*2
 
 	moments_data_nonan = moments_data_array[~np.isnan(moments_data_array)]
 	deviation_r[np.where(np.abs(moments_data_nonan)<1)] = deviation[np.where(np.abs(moments_data_nonan)<1)]
@@ -384,12 +385,12 @@ if __name__ == "__main__":
 	
 	# Estimation parameters  
 	tol = 1E-14
-	N_elite = 60
+	N_elite = 50
 	d = 3
-	estimation_name = 'Preliminary_all_v2'
+	estimation_name = 'Preliminary_all_v5'
 	world = MPI4py.COMM_WORLD
 	number_tau_groups = 8
-	t = 0
+	t = 1
 
 	# Folder for settings in home and declare scratch path
 	settings_folder = 'settings/'
