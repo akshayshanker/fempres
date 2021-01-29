@@ -79,7 +79,7 @@ if __name__ == "__main__":
 		edu_config = yaml.safe_load(stream)
 
 	param_random_bounds = {}
-	with open('{}random_param_bounds.csv'.format(settings_folder), newline='') as pscfile:
+	with open('{}random_param_bounds_stdrr.csv'.format(settings_folder), newline='') as pscfile:
 		reader_ran = csv.DictReader(pscfile)
 		for row in reader_ran:
 			param_random_bounds[row['parameter']] = np.float64([row['LB'],
