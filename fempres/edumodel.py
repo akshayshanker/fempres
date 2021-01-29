@@ -320,7 +320,7 @@ if __name__ == "__main__":
     settings = 'settings/'
     # Name of model
     model_name = 'tau01'
-    estimation_name = 'Preliminary_all_v1'
+    estimation_name = 'Preliminary_all_v5'
     # Path for scratch folder (will contain latest estimated means)
     scr_path = "/scratch/pv33/edu_model_temp/"
 
@@ -346,11 +346,11 @@ if __name__ == "__main__":
                         edu_config['baseline_lite']['parameters']['N'],2)
 
 
-    scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
-    Path(scr_path2).mkdir(parents=True, exist_ok=True)
+    #scr_path2 = '/scratch/pv33/edu_model_temp/' + '/' + estimation_name
+    #Path(scr_path2).mkdir(parents=True, exist_ok=True)
 
-    np.save(scr_path2+'/'+ 'U.npy',U)
-    np.save(scr_path2+'/'+ 'U_z.npy',U_z)
+    #np.save(scr_path2+'/'+ 'U.npy',U)
+    #np.save(scr_path2+'/'+ 'U_z.npy',U_z)
 
     moments_data = pd.read_csv('{}moments_clean.csv'\
                     .format(settings))
