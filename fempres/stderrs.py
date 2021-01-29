@@ -41,9 +41,10 @@ if __name__ == "__main__":
 	from pathlib import Path
 
 	
-	# Estimation parameters  
+	# Estimation settings and labels   
 	estimation_name = 'Preliminary_all_v5'
 	scr_path = '/scratch/pv33/edu_model_temp/' + estimation_name
+	settings_folder = 'settings/'
 	
 	# world communicator class
 	world = MPI4py.COMM_WORLD
@@ -68,7 +69,7 @@ if __name__ == "__main__":
 	# moments_data are moments for this group 
 	moments_data_raw= pd.read_csv('{}moments_clean.csv'\
 					.format(settings_folder))
-	moments_data_mapped = map_moments(moments_data_raw)
+	moments_data_mapped = edumodel.map_moments(moments_data_raw)
 	# Assign model tau group according to each core according to processor color
 	model_name = list(moments_data_mapped.keys())[color_layer_1]
 	moments_data = moments_data_mapped[model_name]['data_moments']
@@ -90,7 +91,7 @@ if __name__ == "__main__":
 
 	# Load the parameters theta_0
 	sampmom = pickle.load(open("/scratch/pv33/edu_model_temp/{}/latest_sampmom.smms".format(estimation_name + '/'+ model_name),"rb"))
-	theta_0 = sampmom[0]
+	theta_0 = np.array(sampmom[0])
 
 	# Define a function that takes in a paramter vector (possibly perturbed) and returns moments
 	# Note we use the config for the tau group 
@@ -125,12 +126,15 @@ if __name__ == "__main__":
 	# THERE ARE 20 CPUS PER TAU GROUP 
 	# THE TAU RANK WILL DETERMINE WHICH PARAMTERS THE CPU DOES CE FOR 
 
-	epsilon = ?
+	epsilon = .01
 	# generate pertubed parameter +e
-	theta_e_plus = theta_0[tau_world_rank] + epsilon 
+	theta_e_plus = np.copy(theta_0)
+	theta_e_plus[tau_world_rank] = theta_0[tau_world_rank] + epsilon 
+	print(theta_e_plus)
 	moments_sim_array_clean_plus_epsilon = gen_moments(theta_e_plus)
 
-	theta_e_minus = theta_0[tau_world_rank] - epsilon 
+	theta_e_minus = np.copy(theta_0)
+	theta_e_minus[tau_world_rank] = theta_0[tau_world_rank] - epsilon 
 	moments_sim_array_clean_minus_epsilon = gen_moments(theta_e_minus)
 
 	# NOW CALCULATE array of central differences wrt parameter tau here
@@ -139,7 +143,7 @@ if __name__ == "__main__":
 	# Then the master of each tau world gaters all the arrays
 	# Note the order is maintained so the jacobian_T[0] will be the derivative wrt to 
 	# parameter calculated on tau_world.rank = 0, hence the paramter with index zero in the theta_0 array
-	
+
 	tau_world.Barrier()
 
 	jacobian_T = tau_world.gather(delta_moments_del_tau, root = 0)
@@ -152,6 +156,5 @@ if __name__ == "__main__":
 		# create SE errors array, take np.sqrt of diagolas
 		# plot estimates table 
 
-
-
+		std_errs = np.pinv(np.dot(np.transpose(jacobian), jacobian))
 	
