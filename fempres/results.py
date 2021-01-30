@@ -69,7 +69,7 @@ def plot_results_all(moments_sim_all,
 
 		#loop through each of the group
 		for j, group_id in zip(np.arange(len(group_list)),group_list):
-			xs = np.arange(11)
+			xs = np.arange(1,12)
 			ys = moments_data_all[j,:,i]
 			p = ax[j].plot(xs, ys, marker=markers[0], color=col_dict['data'], linestyle=linestyles[0],
 						label=line_names[0], linewidth=2)
@@ -83,6 +83,7 @@ def plot_results_all(moments_sim_all,
 			ax[j].spines['top'].set_visible(False)
 			ax[j].spines['right'].set_visible(False)
 			#ax[j].legend(loc='upper left', ncol=2)
+			#ax.ticks[[1,2,3,4,5,6,7,8,9,10,11]]
 		
 		handles, labels = ax[7].get_legend_handles_labels()
 		fig.legend(handles, labels, loc='upper center', ncol=2)
@@ -115,7 +116,7 @@ def plot_results_paper(moments_sim_all,
 		ax = ax1.flatten()[2:]
 
 		for k in np.arange(len(group_list_names)):
-			xs = np.arange(11)
+			xs = np.arange(1,12)
 			ys = moments_data_all[int(group_list_diffs[k][0]),:,i] - moments_data_all[int(group_list_diffs[k][1]),:,i]
 			p = ax[k].plot(xs, ys, marker=markers[0], color=col_dict['data'], linestyle=linestyles[0],
 							label=line_names[0], linewidth=2)
@@ -125,6 +126,10 @@ def plot_results_paper(moments_sim_all,
 			ax[k].set_title(group_list_names[k].format(i+1), fontsize = 10)
 			ax[k].spines['top'].set_visible(False)
 			ax[k].spines['right'].set_visible(False)
+			ax[k].ticks[[1,2,3,4,5,6,7,8,9,10,11]]
+			ax[k].set_xlabel('Week')
+
+
 
 
 		ax1 = ax1.flatten()
@@ -141,6 +146,104 @@ def plot_results_paper(moments_sim_all,
 		fig.subplots_adjust(hspace=0.5, bottom=0.1)
 		fig.subplots_adjust(top=0.88)
 		fig.savefig("plots/plot_paper_{}/{}.png".format(ID, name + '_Jan18'), transparent=True)
+
+	return 
+
+
+def plot_results_paper2(moments_sim_all,
+						moments_data_all,
+						variable_list,
+						variable_list_names,
+						group_list_names, 
+						group_list_diffs):
+
+	line_names = ['data: gr3', 'sim: gr3','data: gr2/1', 'sim: gr2/1']
+
+	linestyles=["-","-"]
+	col_dict = {'data': 'black', 'sim':'gray'}
+	markers=['x', 'o']
+	ID = np.random.randint(0,9999)
+	plot_path = "plots/plot_paper2_{}/".format(ID)
+	Path(plot_path).mkdir(parents=True, exist_ok=True)
+
+	for i, name in zip(np.arange(len(variable_list)),variable_list):
+		fig, ax1 = plt.subplots(3,2,gridspec_kw={"height_ratios":[0.00001,1,1]})
+		ax = ax1.flatten()[2:]
+
+		for k in np.arange(len(group_list_names)):
+			xs = np.arange(1,12)
+			ys = moments_data_all[int(group_list_diffs[k][0]),:,i] 
+			p = ax[k].plot(xs, ys, marker=markers[0], color=col_dict['data'], linestyle=linestyles[0],
+							label=line_names[0], linewidth=2)
+			ys = moments_data_all[int(group_list_diffs[k][1]),:,i]
+			p = ax[k].plot(xs, ys, marker=markers[1], color=col_dict['data'], linestyle=linestyles[0],
+				label=line_names[2], linewidth=2)
+
+			ys = moments_sim_all[int(group_list_diffs[k][0]),:,i]
+			p = ax[k].plot(xs, ys, marker=markers[0], color=col_dict['sim'], linestyle=linestyles[1],
+								label=line_names[1], linewidth=2)
+
+			ys = moments_sim_all[int(group_list_diffs[k][1]),:,i]
+			p = ax[k].plot(xs, ys, marker=markers[1], color=col_dict['sim'], linestyle=linestyles[1],
+								label=line_names[3], linewidth=2)
+
+
+			ax[k].set_title(group_list_names[k].format(i+1), fontsize = 10)
+			ax[k].spines['top'].set_visible(False)
+			ax[k].spines['right'].set_visible(False)
+			ax[k].set_xticks([1,2,3,4,5,6,7,8,9,10,11]) 
+			
+
+
+			if variable_list_names[i] == 'Book hours' or variable_list_names[i] == 'Game session hours':
+				ax[k].set_ylim(0,60)
+				ax[k].set_yticks(np.arange(0, 60+1, 10.0))
+
+
+			if variable_list_names[i] == 'MCQ hours' or variable_list_names[i] == 'SAQ hours':
+				ax[k].set_ylim(0,20)
+				ax[k].set_yticks(np.arange(0, 20+1, 10.0))
+
+
+			if variable_list_names[i] == 'SAQ hours':
+				ax[k].set_ylim(0,5)
+				ax[k].set_yticks(np.arange(0, 5+1, 2.0))
+
+
+			if variable_list_names[i] == 'MCQ attempts' or variable_list_names[i] == 'Book page views':
+				ax[k].set_ylim(0,900)
+				ax[k].set_yticks(np.arange(0,900+1, 200.0))
+
+	
+			if variable_list_names[i] == 'SAQ attempts':
+				ax[k].set_ylim(0,20)
+				ax[k].set_yticks(np.arange(0, 20+1, 4.0))
+
+
+			if variable_list_names[i] == 'Happines points':
+				ax[k].set_ylim(0,350)
+				ax[k].set_yticks(np.arange(0, 350+1, 100.0))
+
+		ax1 = ax1.flatten()
+		ax1[0].axis("off")
+		ax1[0].set_title('Males'.format(i+1), fontweight='bold')
+		ax1[1].axis("off")
+		ax1[1].set_title('Females'.format(i+1), fontweight='bold')
+		ax[-1].set_xlabel('Week')
+		ax[-2].set_xlabel('Week')
+
+		handles, labels = ax[3].get_legend_handles_labels()
+		#ax[0].legend(loc='upper left', ncol=2)
+		#ax[0].legend(handles, labels, loc='bottom center', ncol=2)
+		fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0),
+          fancybox=True, ncol=2)
+
+		fig.tight_layout()
+		fig.suptitle(variable_list_names[i])
+		fig.subplots_adjust(hspace=0.7, bottom=0.1)
+		fig.subplots_adjust(top=0.88)
+		fig.subplots_adjust(bottom=0.2)
+		fig.savefig("plots/plot_paper2_{}/{}.png".format(ID, name + 'final'), transparent=True)
 
 	return 
 
@@ -219,15 +322,22 @@ def ordered_lists_to_df(mean_list, se_list, table_row_names, table_row_symbols, 
 	return df
 
 def df_to_tex_basic(df): 
-	#Convert pandas dataframe to tex string, no headings, only the numeric part
-	#Convert df to tex code, 3 decimal places, no row numbering
-	table_tex = df.to_latex(
-	header = False,
-	float_format="{:0.4f}".format, 
-	column_format="lcccccccccc",
-	escape = False, #stops reading of latex command symbols as text (eg. $ -> \$, \ -> \backslash)
-	index = False)
-	return table_tex
+    #Format moments to be 3d.p
+    moment_indices = [2,4,6,8]
+    #Format standard errors to be 3d.p with scientific notation
+    se_indices = [3,5,7,9]
+    df[moment_indices] = df[moment_indices].applymap("{0:.3f}".format)
+    df[se_indices] = df[se_indices].applymap("{0:.3E}".format)
+    
+    #Convert df to tex code, 3 decimal places, no row numbering
+    table_tex = df.to_latex(
+    header = False,
+    #float_format="{:0.3f}".format, 
+    column_format="lcccccccccc",
+    escape = False, #stops reading of latex command symbols as text (eg. $ -> \$, \ -> \backslash)
+    index = False)
+    return table_tex
+
 
 def tex_add_environment(table_tex, pres = "male"):
 	#Add code before/after tabular environment
@@ -292,6 +402,23 @@ def tex_add_row_headings(table_tex):
 	return table_tex
 
 #Wrapper function for complete transformation of df to tex table
+def df_to_tex_basic(df): 
+    #Format moments to be 3d.p
+    moment_indices = [2,4,6,8]
+    #Format standard errors to be 3d.p with scientific notation
+    se_indices = [3,5,7,9]
+    df[moment_indices] = df[moment_indices].applymap("{0:.3f}".format)
+    df[se_indices] = df[se_indices].applymap("{0:.4f}".format)
+    
+    #Convert df to tex code, 3 decimal places, no row numbering
+    table_tex = df.to_latex(
+    header = False,
+    #float_format="{:0.3f}".format, 
+    column_format="lcccccccccc",
+    escape = False, #stops reading of latex command symbols as text (eg. $ -> \$, \ -> \backslash)
+    index = False)
+    return table_tex
+
 def df_to_tex_complete(df, pres = "male"):
 	table_tex = df_to_tex_basic(df)
 	table_tex = tex_add_environment(table_tex, pres)
@@ -511,29 +638,9 @@ if __name__ == "__main__":
 
 	# To run the model with the latest estimated moments, set the covariance
 	# of the paramter distribution to zero so the mean is drawn 
-
 	param_means = sampmom[0]
 	#param_cov = sampmom[1]
 	param_cov = np.zeros(np.shape(sampmom[1]))
-
-
-	# Blocked out code to adjust previous estimate values and number of params
-	#param_means = np.append(param_means,.4)
-	#param_cov = np.append(param_cov, [np.ones(len(param_means)-1)], 0)
-	#param_cov = np.append(param_cov, np.transpose([np.ones(len(param_means))]), 1)
-
-	#sampmom[0] = param_means
-	#sampmom[1] = param_cov
-
-	#pickle.dump(sampmom,open(scr_path + "/{}/latest_sampmom.smms"\
-	#					.format(model_name),"wb"))
-
-	# Load simulation shock draws
-	# Akshay to change this later so it is drawn from the HD
-	#U = np.random.rand(edu_config['baseline_lite']['parameters']['N'],\
-	#					edu_config['baseline_lite']['parameters']['T'])
-	#U_z = np.random.rand(edu_config['baseline_lite']['parameters']['N'],2)
-
 	U = np.load(scr_path+'/'+ 'U.npy')
 	U_z = np.load(scr_path+'/'+ 'U_z.npy')
 
@@ -573,6 +680,8 @@ if __name__ == "__main__":
 
 		moments_data_all = np.empty(np.shape(moments_sim_all))
 
+
+
 		std_errs = np.empty((8, len(param_all[0,:])))
 
 		for i in range(len(std_errs)):
@@ -584,6 +693,8 @@ if __name__ == "__main__":
 		for i, keys in zip(np.arange(8),list(moments_data_mapped.keys())):
 			moments_data_all[i] = moments_data_mapped[keys]['data_moments']
 
+		np.save('moments_data_all.npy',moments_data_all )
+		np.save('moments_sim_all.npy',moments_sim_all )
 		# Generate new data-frames for plotting 
 
 		# Each item in moment list is a 11 x 36 array
@@ -760,8 +871,7 @@ if __name__ == "__main__":
 				'Happines points',\
 				'MCQ attempts',\
 				'SAQ attempts', \
-				'Book page views '
-				'av_totebook_pageviews_cumul',\
+				'Book page views',\
 				'sd_final',\
 				'sd_mark',\
 				'sd_markw13_exp1',\
@@ -800,8 +910,8 @@ if __name__ == "__main__":
 				'co_sa',\
 				'co_fatar_ii']
 
-		group_names = ['Female pres. gender disc. vs. unsdisc.',\
-					   'Female pres. gender disc. vs. unsdisc.',\
+		group_names = ['Female pres., gender disc. vs. unsdisc.',\
+					   'Female pres., gender disc. vs. unsdisc.',\
 						'Gender disc., female vs. male pres.',\
 						'Gender disc., female vs. male pres.']
 
@@ -813,7 +923,7 @@ if __name__ == "__main__":
 							[6, 2], [7,3]]
 
 
-		plot_results_paper(moments_sim_all, moments_data_all, list_moments, variable_names, group_names, group_diffs_ind)
+		plot_results_paper2(moments_sim_all, moments_data_all, list_moments, variable_names, group_names, group_diffs_ind)
 		make_tables(param_all, std_errs, param_names_new, param_names_old, 
 			table_row_names, table_row_symbols, compile=True)
 
